@@ -23,4 +23,14 @@ public class Probe {
     public int getZ() { return z; }
     public Direction getDirection() { return direction; }
 
+    public void moveForward()
+    {
+        switch (direction){
+            case NORTH -> y++;
+            case SOUTH -> y--;
+            case EAST -> x++;
+            case WEST -> x--;
+        }
+    }
+
 }
