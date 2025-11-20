@@ -33,4 +33,14 @@ public class Probe {
         }
     }
 
+    public void moveBackward()
+    {
+        switch (direction){
+            case NORTH -> y--;
+            case SOUTH -> y++;
+            case EAST -> x--;
+            case WEST -> x++;
+        }
+    }
+
 }
