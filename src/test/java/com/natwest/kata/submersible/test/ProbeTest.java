@@ -17,4 +17,14 @@ public class ProbeTest {
         assertEquals(5, probe.getZ());
         assertEquals(Direction.NORTH, probe.getDirection());
     }
+
+    @Test
+    void shouldMoveForwardIn3DGridBasedOnDirection()
+    {
+        Probe probe = new Probe(2,3,5, Direction.NORTH);
+        probe.moveForward();
+        assertEquals(2, probe.getX());
+        assertEquals(4, probe.getY());
+        assertEquals(5, probe.getZ());
+    }
 }
