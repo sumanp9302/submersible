@@ -20,17 +20,6 @@ public class ProbeTest {
         assertEquals(Direction.NORTH, probe.getDirection());
     }
 
-
-    //Backward Movement
-    @Test
-    void shouldMoveBackwardIn3DGridBasedOnDirection() {
-        Probe probe = new Probe(2, 3, 5, Direction.NORTH);
-        probe.moveBackward();
-        assertEquals(2, probe.getX());
-        assertEquals(2, probe.getY());
-        assertEquals(5, probe.getZ());
-    }
-
     /*----------------Left Turning------------*/
     @Test
     void shouldTurnLeftFromNorthToWest() {
@@ -122,5 +111,21 @@ public class ProbeTest {
         assertEquals(expectedY, probe.getY());
         assertEquals(expectedZ, probe.getZ());
     }
+
+    @ParameterizedTest
+    @CsvSource({
+            "NORTH, 2, 2, 5",
+            "EAST, 1, 3, 5",
+            "SOUTH, 2, 4, 5",
+            "WEST, 3, 3, 5"
+    })
+    void shouldMoveBackward(Direction direction, int expectedX, int expectedY, int expectedZ) {
+        Probe probe = new Probe(2, 3, 5, direction);
+        probe.moveBackward();
+        assertEquals(expectedX, probe.getX());
+        assertEquals(expectedY, probe.getY());
+        assertEquals(expectedZ, probe.getZ());
+    }
+
 
 }
