@@ -104,6 +104,7 @@ public class ProbeTest {
     }
 
     /*-------------Upward Movement-----------------*/
+    @Test
     void shouldMoveUpIn3DGrid(){
         Probe probe = new Probe(2,3,5, Direction.NORTH);
         probe.moveUp();

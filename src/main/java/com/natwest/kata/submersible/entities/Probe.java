@@ -61,4 +61,8 @@ public class Probe {
         }
     }
 
+    public void moveUp(){
+        z++;
+    }
+
 }
