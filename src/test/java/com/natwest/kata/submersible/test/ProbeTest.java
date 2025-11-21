@@ -116,7 +116,7 @@ public class ProbeTest {
     @Test
     void shouldMoveDownIn3DGrid(){
         Probe probe = new Probe(2,3,5, Direction.NORTH);
-        probe.moveUp();
+        probe.moveDown();
         assertEquals(2,probe.getX());
         assertEquals(3,probe.getY());
         assertEquals(4,probe.getZ());
