@@ -25,7 +25,7 @@ public class ProbeTest {
             "NORTH, 2, 4, 5",
             "EAST, 3, 3, 5",
             "SOUTH, 2, 2, 5",
-            "WEST, 1, 3, 5",
+            "WEST, 1, 3, 5"
     })
     void shouldMoveForward(Direction direction, int expectedX, int expectedY, int expectedZ) {
         Probe probe = new Probe(2, 3, 5, direction);
