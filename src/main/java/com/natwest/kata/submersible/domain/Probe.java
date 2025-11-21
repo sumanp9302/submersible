@@ -1,4 +1,4 @@
-package com.natwest.kata.submersible.entities;
+package com.natwest.kata.submersible.domain;
 
 import com.natwest.kata.submersible.enums.Direction;
 

@@ -1,7 +1,7 @@
 package com.natwest.kata.submersible.test;
 
 
-import com.natwest.kata.submersible.entities.Probe;
+import com.natwest.kata.submersible.domain.Probe;
 import com.natwest.kata.submersible.enums.Direction;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
