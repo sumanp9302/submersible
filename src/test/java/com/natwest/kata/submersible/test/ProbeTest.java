@@ -20,25 +20,6 @@ public class ProbeTest {
         assertEquals(Direction.NORTH, probe.getDirection());
     }
 
-    /*-------------Upward Movement-----------------*/
-    @Test
-    void shouldMoveUpIn3DGrid() {
-        Probe probe = new Probe(2, 3, 5, Direction.NORTH);
-        probe.moveUp();
-        assertEquals(2, probe.getX());
-        assertEquals(3, probe.getY());
-        assertEquals(6, probe.getZ());
-    }
-
-    @Test
-    void shouldMoveDownIn3DGrid() {
-        Probe probe = new Probe(2, 3, 5, Direction.NORTH);
-        probe.moveDown();
-        assertEquals(2, probe.getX());
-        assertEquals(3, probe.getY());
-        assertEquals(4, probe.getZ());
-    }
-
     @ParameterizedTest
     @CsvSource({
             "NORTH, 2, 4, 5",
@@ -96,4 +77,12 @@ public class ProbeTest {
         assertEquals(expected, probe.getDirection());
     }
 
+    @Test
+    void shouldMoveUpAndDown() {
+        Probe probe = new Probe(2, 3, 5, Direction.NORTH);
+        probe.moveUp();
+        assertEquals(6, probe.getZ());
+        probe.moveDown();
+        assertEquals(5, probe.getZ());
+    }
 }
