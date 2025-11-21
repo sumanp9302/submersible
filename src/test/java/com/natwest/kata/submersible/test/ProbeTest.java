@@ -18,6 +18,7 @@ public class ProbeTest {
         assertEquals(Direction.NORTH, probe.getDirection());
     }
 
+    //Forward Movement
     @Test
     void shouldMoveForwardIn3DGridBasedOnDirection()
     {
@@ -28,6 +29,7 @@ public class ProbeTest {
         assertEquals(5, probe.getZ());
     }
 
+    //Backward Movement
     @Test
     void shouldMoveBackwardIn3DGridBasedOnDirection()
     {
@@ -38,6 +40,7 @@ public class ProbeTest {
         assertEquals(5, probe.getZ());
     }
 
+    /*----------------Left Turning------------*/
     @Test
     void shouldTurnLeftFromNorthToWest()
     {
@@ -69,4 +72,54 @@ public class ProbeTest {
         probe.turnLeft();
         assertEquals(Direction.NORTH, probe.getDirection());
     }
+
+    /*----------------Right Turning------------*/
+    @Test
+    void shouldTurnRightFromNorthToEast()
+    {
+        Probe probe = new Probe(2,3,5,Direction.NORTH);
+        probe.turnRight();
+        assertEquals(Direction.EAST, probe.getDirection());
+    }
+
+    @Test
+    void shouldTurnRightFromEastToSouth() {
+        Probe probe = new Probe(2, 3, 5, Direction.EAST);
+        probe.turnRight();
+        assertEquals(Direction.SOUTH, probe.getDirection());
+    }
+
+    @Test
+    void shouldTurnRightFromSouthToWest() {
+        Probe probe = new Probe(2, 3, 5, Direction.SOUTH);
+        probe.turnRight();
+        assertEquals(Direction.WEST, probe.getDirection());
+    }
+
+    @Test
+    void shouldTurnRightFromWestToNorth() {
+        Probe probe = new Probe(2, 3, 5, Direction.WEST);
+        probe.turnRight();
+        assertEquals(Direction.NORTH, probe.getDirection());
+    }
+
+    /*-------------Upward Movement-----------------*/
+    @Test
+    void shouldMoveUpIn3DGrid(){
+        Probe probe = new Probe(2,3,5, Direction.NORTH);
+        probe.moveUp();
+        assertEquals(2,probe.getX());
+        assertEquals(3,probe.getY());
+        assertEquals(6,probe.getZ());
+    }
+
+    @Test
+    void shouldMoveDownIn3DGrid(){
+        Probe probe = new Probe(2,3,5, Direction.NORTH);
+        probe.moveDown();
+        assertEquals(2,probe.getX());
+        assertEquals(3,probe.getY());
+        assertEquals(4,probe.getZ());
+    }
+
 }
