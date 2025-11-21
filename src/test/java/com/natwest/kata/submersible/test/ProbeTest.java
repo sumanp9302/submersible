@@ -18,6 +18,7 @@ public class ProbeTest {
         assertEquals(Direction.NORTH, probe.getDirection());
     }
 
+    //Forward Movement
     @Test
     void shouldMoveForwardIn3DGridBasedOnDirection()
     {
@@ -28,6 +29,7 @@ public class ProbeTest {
         assertEquals(5, probe.getZ());
     }
 
+    //Backward Movement
     @Test
     void shouldMoveBackwardIn3DGridBasedOnDirection()
     {
@@ -38,6 +40,7 @@ public class ProbeTest {
         assertEquals(5, probe.getZ());
     }
 
+    /*----------------Left Turning------------*/
     @Test
     void shouldTurnLeftFromNorthToWest()
     {
@@ -68,5 +71,14 @@ public class ProbeTest {
         Probe probe = new Probe(2,3,5,Direction.EAST);
         probe.turnLeft();
         assertEquals(Direction.NORTH, probe.getDirection());
+    }
+
+    /*----------------Right Turning------------*/
+    @Test
+    void shouldTurnRightFromNorthToEast()
+    {
+        Probe probe = new Probe(2,3,5,Direction.NORTH);
+        probe.turnRight();
+        assertEquals(Direction.EAST, probe.getDirection());
     }
 }
