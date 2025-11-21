@@ -65,4 +65,8 @@ public class Probe {
         z++;
     }
 
+    public void moveDown(){
+        z--;
+    }
+
 }
