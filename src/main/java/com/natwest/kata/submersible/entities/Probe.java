@@ -52,4 +52,13 @@ public class Probe {
         }
     }
 
+    public void turnRight(){
+        switch(direction){
+            case NORTH -> direction = Direction.EAST;
+            case EAST -> direction = Direction.SOUTH;
+            case SOUTH -> direction = Direction.WEST;
+            case WEST -> direction = Direction.NORTH;
+        }
+    }
+
 }
