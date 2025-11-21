@@ -103,4 +103,13 @@ public class ProbeTest {
         assertEquals(Direction.NORTH, probe.getDirection());
     }
 
+    /*-------------Upward Movement-----------------*/
+    void shouldMoveUpIn3DGrid(){
+        Probe probe = new Probe(2,3,5, Direction.NORTH);
+        probe.moveUp();
+        assertEquals(2,probe.getX());
+        assertEquals(3,probe.getY());
+        assertEquals(6,probe.getZ());
+    }
+
 }
