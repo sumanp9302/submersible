@@ -88,9 +88,9 @@ public class ProbeTest {
         Grid grid = new Grid(6, 6, 6);
         Probe probe = new Probe(2, 3, 5, Direction.NORTH, grid);
         probe.moveUp();
-        assertEquals(6, probe.getZ());
-        probe.moveDown();
         assertEquals(5, probe.getZ());
+        probe.moveDown();
+        assertEquals(4, probe.getZ());
     }
 
     @Test
@@ -110,7 +110,7 @@ public class ProbeTest {
 
     @Test
     void shouldNotMoveIntoObstacles(){
-        Grid grid = new Grid(5,5,5);
+        Grid grid = new Grid(6,6,6);
         grid.addObstacle(3,3,5);
         Probe probe = new Probe(2,3,5, Direction.EAST, grid);
         probe.moveForward();

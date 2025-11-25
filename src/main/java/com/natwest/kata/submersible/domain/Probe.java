@@ -75,12 +75,11 @@ public class Probe {
         }
     }
 
+
     private void move(int dx, int dy, int dz) {
         int newX = x + dx, newY = y + dy, newZ = z + dz;
-        if (grid.isWithinBounds(newX, newY, newZ)) {
-            x = newX;
-            y = newY;
-            z = newZ;
+        if (grid.isWithinBounds(newX, newY, newZ) && !grid.isObstacle(newX, newY, newZ)) {
+            x = newX; y = newY; z = newZ;
         }
     }
 

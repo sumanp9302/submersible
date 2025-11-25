@@ -24,12 +24,14 @@ public class Grid {
         return x >= 0 && x < width && y >= 0 && y < height && z >= 0 && z < depth;
     }
 
-    public void addObstacle(int x, int y, int z){
-        if(!isWithinBounds(x,y,z)) throw new IllegalArgumentException("Obstacles out of bounds");
+
+    public void addObstacle(int x, int y, int z) {
+        if (!isWithinBounds(x, y, z)) throw new IllegalArgumentException("Obstacle out of bounds");
         obstacles.add(x + "," + y + "," + z);
     }
 
-    public boolean isObstalce(int x, int y, int z){
+    public boolean isObstacle(int x, int y, int z) {
         return obstacles.contains(x + "," + y + "," + z);
     }
+
 }
