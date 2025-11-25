@@ -2,6 +2,9 @@ package com.natwest.kata.submersible.domain;
 
 import com.natwest.kata.submersible.enums.Direction;
 
+import java.util.ArrayList;
+import java.util.List;
+
 
 public class Probe {
 
@@ -10,6 +13,7 @@ public class Probe {
     private int z;
     private Direction direction;
     private final Grid grid;
+    private final List<String> visitedCoordinates = new ArrayList<>();
 
     public Probe(int x, int y, int z, Direction direction, Grid grid) {
         if (direction == null) throw new IllegalArgumentException("Direction cannot be null");
@@ -19,6 +23,7 @@ public class Probe {
         this.z = z;
         this.direction = direction;
         this.grid = grid;
+        recordPosition();
     }
 
     public int getX() {
@@ -36,6 +41,8 @@ public class Probe {
     public Direction getDirection() {
         return direction;
     }
+
+    public List<String> getVisitedCoordinates() { return visitedCoordinates; }
 
     public void moveForward() {
         move(direction == Direction.NORTH ? 0 : direction == Direction.SOUTH ? 0 :
@@ -80,7 +87,11 @@ public class Probe {
         int newX = x + dx, newY = y + dy, newZ = z + dz;
         if (grid.isWithinBounds(newX, newY, newZ) && !grid.isObstacle(newX, newY, newZ)) {
             x = newX; y = newY; z = newZ;
+            recordPosition();
         }
     }
 
+    public void recordPosition(){
+        visitedCoordinates.add("(" + x + "," + y + "," + z + ")");
+    }
 }

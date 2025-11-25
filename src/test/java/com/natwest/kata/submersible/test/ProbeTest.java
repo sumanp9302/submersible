@@ -127,7 +127,7 @@ public class ProbeTest {
         probe.turnRight();
         probe.moveForward();
 
-        assertEquals(4, probe.getVisitedCordinates().size());
+        assertEquals(4, probe.getVisitedCoordinates().size());
 
         assertTrue(probe.getVisitedCoordinates().contains("(0,0,0)"));
         assertTrue(probe.getVisitedCoordinates().contains("(1,2,0)"));
