@@ -1,6 +1,7 @@
 package com.natwest.kata.submersible.test;
 
 
+import com.natwest.kata.submersible.domain.Grid;
 import com.natwest.kata.submersible.domain.Probe;
 import com.natwest.kata.submersible.enums.Direction;
 import org.junit.jupiter.api.Test;
@@ -85,4 +86,20 @@ public class ProbeTest {
         probe.moveDown();
         assertEquals(5, probe.getZ());
     }
+
+    @Test
+    void shouldThroughExceptionWhenProbeInitializedOutsideGrid(){
+        Grid grid = new Grid(5,5,5);
+        assertThrows(IllegalArgumentException.class, () -> new Probe(6,0,0, Direction.NORTH, grid));
+    }
+
+    @Test
+    void shouldNotMoveOutsideGridBounds(){
+        Grid grid = new Grid(5,5,5);
+        Probe probe = new Probe(0,0,0, Direction.NORTH, grid);
+        probe.moveBackward();
+        assertEquals(0, probe.getX());
+        assertEquals(0,probe.getY());
+    }
+
 }
