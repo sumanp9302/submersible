@@ -14,7 +14,8 @@ public class ProbeTest {
 
     @Test
     void shouldInitializeProbeWithGivenCoordinatesAndDirection() {
-        Probe probe = new Probe(2, 3, 5, Direction.NORTH);
+        Grid grid = new Grid(6, 6, 6);
+        Probe probe = new Probe(2, 3, 5, Direction.NORTH, grid);
         assertEquals(2, probe.getX());
         assertEquals(3, probe.getY());
         assertEquals(5, probe.getZ());
@@ -29,7 +30,8 @@ public class ProbeTest {
             "WEST, 1, 3, 5"
     })
     void shouldMoveForward(Direction direction, int expectedX, int expectedY, int expectedZ) {
-        Probe probe = new Probe(2, 3, 5, direction);
+        Grid grid = new Grid(6, 6, 6);
+        Probe probe = new Probe(2, 3, 5, direction, grid);
         probe.moveForward();
         assertEquals(expectedX, probe.getX());
         assertEquals(expectedY, probe.getY());
@@ -44,7 +46,8 @@ public class ProbeTest {
             "WEST, 3, 3, 5"
     })
     void shouldMoveBackward(Direction direction, int expectedX, int expectedY, int expectedZ) {
-        Probe probe = new Probe(2, 3, 5, direction);
+        Grid grid = new Grid(6, 6, 6);
+        Probe probe = new Probe(2, 3, 5, direction, grid);
         probe.moveBackward();
         assertEquals(expectedX, probe.getX());
         assertEquals(expectedY, probe.getY());
@@ -60,7 +63,8 @@ public class ProbeTest {
             "EAST, NORTH"
     })
     void shouldTurnLeft(Direction initial, Direction expected) {
-        Probe probe = new Probe(2, 3, 5, initial);
+        Grid grid = new Grid(6, 6, 6);
+        Probe probe = new Probe(2, 3, 5, initial, grid);
         probe.turnLeft();
         assertEquals(expected, probe.getDirection());
     }
@@ -73,14 +77,16 @@ public class ProbeTest {
             "WEST, NORTH"
     })
     void shouldTurnRight(Direction initial, Direction expected) {
-        Probe probe = new Probe(2, 3, 5, initial);
+        Grid grid = new Grid(6, 6, 6);
+        Probe probe = new Probe(2, 3, 5, initial, grid);
         probe.turnRight();
         assertEquals(expected, probe.getDirection());
     }
 
     @Test
     void shouldMoveUpAndDown() {
-        Probe probe = new Probe(2, 3, 5, Direction.NORTH);
+        Grid grid = new Grid(6, 6, 6);
+        Probe probe = new Probe(2, 3, 5, Direction.NORTH, grid);
         probe.moveUp();
         assertEquals(6, probe.getZ());
         probe.moveDown();
@@ -88,18 +94,18 @@ public class ProbeTest {
     }
 
     @Test
-    void shouldThroughExceptionWhenProbeInitializedOutsideGrid(){
-        Grid grid = new Grid(5,5,5);
-        assertThrows(IllegalArgumentException.class, () -> new Probe(6,0,0, Direction.NORTH, grid));
+    void shouldThroughExceptionWhenProbeInitializedOutsideGrid() {
+        Grid grid = new Grid(5, 5, 5);
+        assertThrows(IllegalArgumentException.class, () -> new Probe(6, 0, 0, Direction.NORTH, grid));
     }
 
     @Test
-    void shouldNotMoveOutsideGridBounds(){
-        Grid grid = new Grid(5,5,5);
-        Probe probe = new Probe(0,0,0, Direction.NORTH, grid);
+    void shouldNotMoveOutsideGridBounds() {
+        Grid grid = new Grid(5, 5, 5);
+        Probe probe = new Probe(0, 0, 0, Direction.NORTH, grid);
         probe.moveBackward();
         assertEquals(0, probe.getX());
-        assertEquals(0,probe.getY());
+        assertEquals(0, probe.getY());
     }
 
 }

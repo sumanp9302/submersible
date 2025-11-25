@@ -8,7 +8,7 @@ public class Grid {
 
     public Grid(int width, int height, int depth) {
 
-        if(width<=0 || height <=0 || depth <=0){
+        if (width <= 0 || height <= 0 || depth <= 0) {
             throw new IllegalArgumentException("Grid dimensions must be positive");
         }
         this.width = width;
