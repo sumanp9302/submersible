@@ -118,4 +118,20 @@ public class ProbeTest {
         assertEquals(3, probe.getY());
     }
 
+    @Test
+    void shouldTrackVisitedCoordinates(){
+        Grid grid = new Grid(6,6,6);
+        Probe probe = new Probe(0,0,0, Direction.NORTH, grid);
+        probe.moveForward();
+        probe.moveForward();
+        probe.turnRight();
+        probe.moveForward();
+
+        assertEquals(4, probe.getVisitedCordinates().size());
+
+        assertTrue(probe.getVisitedCoordinates().contains("(0,0,0)"));
+        assertTrue(probe.getVisitedCoordinates().contains("(1,2,0)"));
+
+    }
+
 }
