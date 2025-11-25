@@ -108,4 +108,14 @@ public class ProbeTest {
         assertEquals(0, probe.getY());
     }
 
+    @Test
+    void shouldNotMoveIntoObstacles(){
+        Grid grid = new Grid(5,5,5);
+        grid.addObstacle(3,3,5);
+        Probe probe = new Probe(2,3,5, Direction.EAST, grid);
+        probe.moveForward();
+        assertEquals(2, probe.getX());
+        assertEquals(3, probe.getY());
+    }
+
 }

@@ -1,10 +1,14 @@
 package com.natwest.kata.submersible.domain;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class Grid {
 
     private final int width;
     private final int height;
     private final int depth;
+    private final Set<String> obstacles = new HashSet<>();
 
     public Grid(int width, int height, int depth) {
 
@@ -20,15 +24,12 @@ public class Grid {
         return x >= 0 && x < width && y >= 0 && y < height && z >= 0 && z < depth;
     }
 
-    public int getWidth() {
-        return width;
+    public void addObstacle(int x, int y, int z){
+        if(!isWithinBounds(x,y,z)) throw new IllegalArgumentException("Obstacles out of bounds");
+        obstacles.add(x + "," + y + "," + z);
     }
 
-    public int getHeight() {
-        return height;
-    }
-
-    public int getDepth() {
-        return depth;
+    public boolean isObstalce(int x, int y, int z){
+        return obstacles.contains(x + "," + y + "," + z);
     }
 }
