@@ -23,12 +23,7 @@ public class ProbeTest {
     }
 
     @ParameterizedTest
-    @CsvSource({
-            "NORTH, 2, 4, 5",
-            "EAST, 3, 3, 5",
-            "SOUTH, 2, 2, 5",
-            "WEST, 1, 3, 5"
-    })
+    @CsvSource({"NORTH, 2, 4, 5", "EAST, 3, 3, 5", "SOUTH, 2, 2, 5", "WEST, 1, 3, 5"})
     void shouldMoveForward(Direction direction, int expectedX, int expectedY, int expectedZ) {
         Grid grid = new Grid(6, 6, 6);
         Probe probe = new Probe(2, 3, 5, direction, grid);
@@ -39,12 +34,7 @@ public class ProbeTest {
     }
 
     @ParameterizedTest
-    @CsvSource({
-            "NORTH, 2, 2, 5",
-            "EAST, 1, 3, 5",
-            "SOUTH, 2, 4, 5",
-            "WEST, 3, 3, 5"
-    })
+    @CsvSource({"NORTH, 2, 2, 5", "EAST, 1, 3, 5", "SOUTH, 2, 4, 5", "WEST, 3, 3, 5"})
     void shouldMoveBackward(Direction direction, int expectedX, int expectedY, int expectedZ) {
         Grid grid = new Grid(6, 6, 6);
         Probe probe = new Probe(2, 3, 5, direction, grid);
@@ -56,12 +46,7 @@ public class ProbeTest {
 
 
     @ParameterizedTest
-    @CsvSource({
-            "NORTH, WEST",
-            "WEST, SOUTH",
-            "SOUTH, EAST",
-            "EAST, NORTH"
-    })
+    @CsvSource({"NORTH, WEST", "WEST, SOUTH", "SOUTH, EAST", "EAST, NORTH"})
     void shouldTurnLeft(Direction initial, Direction expected) {
         Grid grid = new Grid(6, 6, 6);
         Probe probe = new Probe(2, 3, 5, initial, grid);
@@ -70,12 +55,7 @@ public class ProbeTest {
     }
 
     @ParameterizedTest
-    @CsvSource({
-            "NORTH, EAST",
-            "EAST, SOUTH",
-            "SOUTH, WEST",
-            "WEST, NORTH"
-    })
+    @CsvSource({"NORTH, EAST", "EAST, SOUTH", "SOUTH, WEST", "WEST, NORTH"})
     void shouldTurnRight(Direction initial, Direction expected) {
         Grid grid = new Grid(6, 6, 6);
         Probe probe = new Probe(2, 3, 5, initial, grid);
@@ -109,19 +89,19 @@ public class ProbeTest {
     }
 
     @Test
-    void shouldNotMoveIntoObstacles(){
-        Grid grid = new Grid(6,6,6);
-        grid.addObstacle(3,3,5);
-        Probe probe = new Probe(2,3,5, Direction.EAST, grid);
+    void shouldNotMoveIntoObstacles() {
+        Grid grid = new Grid(6, 6, 6);
+        grid.addObstacle(3, 3, 5);
+        Probe probe = new Probe(2, 3, 5, Direction.EAST, grid);
         probe.moveForward();
         assertEquals(2, probe.getX());
         assertEquals(3, probe.getY());
     }
 
     @Test
-    void shouldTrackVisitedCoordinates(){
-        Grid grid = new Grid(6,6,6);
-        Probe probe = new Probe(0,0,0, Direction.NORTH, grid);
+    void shouldTrackVisitedCoordinates() {
+        Grid grid = new Grid(6, 6, 6);
+        Probe probe = new Probe(0, 0, 0, Direction.NORTH, grid);
         probe.moveForward();
         probe.moveForward();
         probe.turnRight();
@@ -189,5 +169,65 @@ public class ProbeTest {
         assertEquals(2, probe.getZ());
     }
 
+    @Test
+    void shouldTurnUpFromAnyHorizontalDirection() {
+        Grid grid = new Grid(10, 10, 10);
+        Probe probe = new Probe(5, 5, 5, Direction.NORTH, grid);
+
+        probe.turnUp();
+
+        assertEquals(Direction.UP, probe.getDirection());
+    }
+
+    @Test
+    void shouldTurnDownFromAnyHorizontalDirection() {
+        Grid grid = new Grid(10, 10, 10);
+        Probe probe = new Probe(5, 5, 5, Direction.EAST, grid);
+
+        probe.turnDown();
+
+        assertEquals(Direction.DOWN, probe.getDirection());
+    }
+
+    @Test
+    void shouldReturnToPreviousHorizontalDirectionWhenComingDownFromUp() {
+        Grid grid = new Grid(10, 10, 10);
+        Probe probe = new Probe(5, 5, 5, Direction.WEST, grid);
+
+        probe.turnUp();   // now facing UP, lastHorizontal = WEST
+        probe.turnDown(); // should restore lastHorizontal
+
+        assertEquals(Direction.WEST, probe.getDirection());
+    }
+
+    @Test
+    void shouldReturnToPreviousHorizontalDirectionWhenComingUpFromDown() {
+        Grid grid = new Grid(10, 10, 10);
+        Probe probe = new Probe(5, 5, 5, Direction.SOUTH, grid);
+
+        probe.turnDown(); // facing DOWN, lastHorizontal = SOUTH
+        probe.turnUp();   // restore SOUTH
+
+        assertEquals(Direction.SOUTH, probe.getDirection());
+    }
+
+    @Test
+    void leftAndRightShouldDoNothingWhenFacingUpOrDown() {
+        Grid grid = new Grid(10, 10, 10);
+
+        Probe up = new Probe(5, 5, 5, Direction.NORTH, grid);
+        up.turnUp();
+        up.turnLeft();
+        assertEquals(Direction.UP, up.getDirection());
+        up.turnRight();
+        assertEquals(Direction.UP, up.getDirection());
+
+        Probe down = new Probe(5, 5, 5, Direction.EAST, grid);
+        down.turnDown();
+        down.turnLeft();
+        assertEquals(Direction.DOWN, down.getDirection());
+        down.turnRight();
+        assertEquals(Direction.DOWN, down.getDirection());
+    }
 
 }
