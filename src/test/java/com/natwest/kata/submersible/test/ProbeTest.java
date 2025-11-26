@@ -134,4 +134,60 @@ public class ProbeTest {
 
     }
 
+    @Test
+    void shouldFaceUpAndDownUsingRotation() {
+        Grid grid = new Grid(6, 6, 6);
+        Probe probe = new Probe(2, 3, 2, Direction.NORTH, grid);
+
+        // Rotate to UP
+        probe.turnUp();
+        assertEquals(Direction.UP, probe.getDirection());
+
+        // Rotate to DOWN
+        probe.turnDown();
+        assertEquals(Direction.DOWN, probe.getDirection());
+    }
+
+    @Test
+    void shouldNotTurnLeftOrRightWhenFacingVertical() {
+        Grid grid = new Grid(6, 6, 6);
+
+        // When facing UP, L/R should do nothing
+        Probe probeUp = new Probe(2, 3, 2, Direction.NORTH, grid);
+        probeUp.turnUp();
+        probeUp.turnLeft();
+        assertEquals(Direction.UP, probeUp.getDirection());
+        probeUp.turnRight();
+        assertEquals(Direction.UP, probeUp.getDirection());
+
+        // When facing DOWN, L/R should do nothing
+        Probe probeDown = new Probe(2, 3, 2, Direction.EAST, grid);
+        probeDown.turnDown();
+        probeDown.turnLeft();
+        assertEquals(Direction.DOWN, probeDown.getDirection());
+        probeDown.turnRight();
+        assertEquals(Direction.DOWN, probeDown.getDirection());
+    }
+
+    @Test
+    void shouldMoveForwardAndBackwardWhenFacingVertical() {
+        Grid grid = new Grid(6, 6, 6);
+        Probe probe = new Probe(2, 3, 2, Direction.NORTH, grid);
+
+        // Facing UP: forward -> z+1, backward -> z-1
+        probe.turnUp();
+        probe.moveForward();
+        assertEquals(3, probe.getZ());
+        probe.moveBackward();
+        assertEquals(2, probe.getZ());
+
+        // Facing DOWN: forward -> z-1, backward -> z+1
+        probe.turnDown();
+        probe.moveForward();
+        assertEquals(1, probe.getZ());
+        probe.moveBackward();
+        assertEquals(2, probe.getZ());
+    }
+
+
 }
