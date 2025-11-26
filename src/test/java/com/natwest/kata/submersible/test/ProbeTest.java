@@ -1,6 +1,5 @@
 package com.natwest.kata.submersible.test;
 
-
 import com.natwest.kata.submersible.domain.Grid;
 import com.natwest.kata.submersible.domain.Probe;
 import com.natwest.kata.submersible.enums.Direction;
@@ -22,9 +21,18 @@ public class ProbeTest {
         assertEquals(Direction.NORTH, probe.getDirection());
     }
 
+    // --- TDD Stage 3: moveForward for ALL 6 directions ---
     @ParameterizedTest
-    @CsvSource({"NORTH, 2, 4, 5", "EAST, 3, 3, 5", "SOUTH, 2, 2, 5", "WEST, 1, 3, 5"})
-    void shouldMoveForward(Direction direction, int expectedX, int expectedY, int expectedZ) {
+    @CsvSource({
+            // dir    expectedX, expectedY, expectedZ
+            "NORTH, 2, 4, 5",
+            "EAST,  3, 3, 5",
+            "SOUTH, 2, 2, 5",
+            "WEST,  1, 3, 5",
+            "UP,    2, 3, 6",
+            "DOWN,  2, 3, 4"
+    })
+    void shouldMoveForwardInAllDirections(Direction direction, int expectedX, int expectedY, int expectedZ) {
         Grid grid = new Grid(6, 6, 6);
         Probe probe = new Probe(2, 3, 5, direction, grid);
         probe.moveForward();
@@ -33,9 +41,18 @@ public class ProbeTest {
         assertEquals(expectedZ, probe.getZ());
     }
 
+    // --- TDD Stage 3: moveBackward for ALL 6 directions ---
     @ParameterizedTest
-    @CsvSource({"NORTH, 2, 2, 5", "EAST, 1, 3, 5", "SOUTH, 2, 4, 5", "WEST, 3, 3, 5"})
-    void shouldMoveBackward(Direction direction, int expectedX, int expectedY, int expectedZ) {
+    @CsvSource({
+            // dir    expectedX, expectedY, expectedZ
+            "NORTH, 2, 2, 5",
+            "EAST,  1, 3, 5",
+            "SOUTH, 2, 4, 5",
+            "WEST,  3, 3, 5",
+            "UP,    2, 3, 4",
+            "DOWN,  2, 3, 6"
+    })
+    void shouldMoveBackwardInAllDirections(Direction direction, int expectedX, int expectedY, int expectedZ) {
         Grid grid = new Grid(6, 6, 6);
         Probe probe = new Probe(2, 3, 5, direction, grid);
         probe.moveBackward();
@@ -43,7 +60,6 @@ public class ProbeTest {
         assertEquals(expectedY, probe.getY());
         assertEquals(expectedZ, probe.getZ());
     }
-
 
     @ParameterizedTest
     @CsvSource({"NORTH, WEST", "WEST, SOUTH", "SOUTH, EAST", "EAST, NORTH"})
@@ -66,7 +82,8 @@ public class ProbeTest {
     @Test
     void shouldMoveUpAndDown() {
         Grid grid = new Grid(6, 6, 6);
-        Probe probe = new Probe(2, 3, 5, Direction.NORTH, grid);
+        // Start at z = 4 so up -> 5, down -> 4 for a clean cycle
+        Probe probe = new Probe(2, 3, 4, Direction.NORTH, grid);
         probe.moveUp();
         assertEquals(5, probe.getZ());
         probe.moveDown();
@@ -76,7 +93,8 @@ public class ProbeTest {
     @Test
     void shouldThroughExceptionWhenProbeInitializedOutsideGrid() {
         Grid grid = new Grid(5, 5, 5);
-        assertThrows(IllegalArgumentException.class, () -> new Probe(6, 0, 0, Direction.NORTH, grid));
+        assertThrows(IllegalArgumentException.class,
+                () -> new Probe(6, 0, 0, Direction.NORTH, grid));
     }
 
     @Test
@@ -102,16 +120,14 @@ public class ProbeTest {
     void shouldTrackVisitedCoordinates() {
         Grid grid = new Grid(6, 6, 6);
         Probe probe = new Probe(0, 0, 0, Direction.NORTH, grid);
-        probe.moveForward();
-        probe.moveForward();
-        probe.turnRight();
-        probe.moveForward();
+        probe.moveForward(); // (0,1,0)
+        probe.moveForward(); // (0,2,0)
+        probe.turnRight();   // EAST
+        probe.moveForward(); // (1,2,0)
 
         assertEquals(4, probe.getVisitedCoordinates().size());
-
         assertTrue(probe.getVisitedCoordinates().contains("(0,0,0)"));
         assertTrue(probe.getVisitedCoordinates().contains("(1,2,0)"));
-
     }
 
     @Test
@@ -128,7 +144,6 @@ public class ProbeTest {
         probeDown.turnDown();
         assertEquals(Direction.DOWN, probeDown.getDirection());
     }
-
 
     @Test
     void shouldNotTurnLeftOrRightWhenFacingVertical() {
@@ -172,14 +187,11 @@ public class ProbeTest {
         assertEquals(2, downProbe.getZ());
     }
 
-
     @Test
     void shouldTurnUpFromAnyHorizontalDirection() {
         Grid grid = new Grid(10, 10, 10);
         Probe probe = new Probe(5, 5, 5, Direction.NORTH, grid);
-
         probe.turnUp();
-
         assertEquals(Direction.UP, probe.getDirection());
     }
 
@@ -187,9 +199,7 @@ public class ProbeTest {
     void shouldTurnDownFromAnyHorizontalDirection() {
         Grid grid = new Grid(10, 10, 10);
         Probe probe = new Probe(5, 5, 5, Direction.EAST, grid);
-
         probe.turnDown();
-
         assertEquals(Direction.DOWN, probe.getDirection());
     }
 
@@ -197,10 +207,8 @@ public class ProbeTest {
     void shouldReturnToPreviousHorizontalDirectionWhenComingDownFromUp() {
         Grid grid = new Grid(10, 10, 10);
         Probe probe = new Probe(5, 5, 5, Direction.WEST, grid);
-
         probe.turnUp();   // now facing UP, lastHorizontal = WEST
         probe.turnDown(); // should restore lastHorizontal
-
         assertEquals(Direction.WEST, probe.getDirection());
     }
 
@@ -208,10 +216,8 @@ public class ProbeTest {
     void shouldReturnToPreviousHorizontalDirectionWhenComingUpFromDown() {
         Grid grid = new Grid(10, 10, 10);
         Probe probe = new Probe(5, 5, 5, Direction.SOUTH, grid);
-
         probe.turnDown(); // facing DOWN, lastHorizontal = SOUTH
         probe.turnUp();   // restore SOUTH
-
         assertEquals(Direction.SOUTH, probe.getDirection());
     }
 
@@ -233,5 +239,4 @@ public class ProbeTest {
         down.turnRight();
         assertEquals(Direction.DOWN, down.getDirection());
     }
-
 }
