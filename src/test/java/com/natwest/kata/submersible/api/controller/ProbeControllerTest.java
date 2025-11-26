@@ -76,4 +76,21 @@ class ProbeControllerTest {
                 .andExpect(jsonPath("$.execution.invalidCommands.length()").value(2))
                 .andExpect(jsonPath("$.execution.blockedMoves").isNumber());
     }
+
+    @Test
+    void run_returnsNonEmptySummary() throws Exception {
+        RunRequest req = new RunRequest();
+        req.setGrid(new GridDto(5, 5, 5));
+        req.setObstacles(List.of());
+        req.setStart(new CoordinateDto(0, 0, 0));
+        req.setDirection(Direction.NORTH);
+        req.setCommands(List.of("F", "R", "F"));
+
+        mvc.perform(post("/api/probe/run")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(req)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.summary").isNotEmpty());
+    }
+
 }

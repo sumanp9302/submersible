@@ -1,4 +1,3 @@
-
 package com.natwest.kata.submersible.api.error;
 
 import com.natwest.kata.submersible.api.error.ErrorResponse.ErrorDetail;
@@ -7,7 +6,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import java.util.Collections;
 
@@ -43,13 +43,5 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleNotReadable(HttpMessageNotReadableException ex) {
         return ResponseEntity.badRequest()
                 .body(ErrorResponse.validation("Malformed JSON request", Collections.emptyList()));
-    }
-
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGeneric(Exception ex) {
-        var body = new ErrorResponse.ErrorBody("INTERNAL_ERROR", "Unexpected error occurred",
-                Collections.emptyList(), null);
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorResponse(body));
     }
 }

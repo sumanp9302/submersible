@@ -34,4 +34,7 @@ public class Grid {
         return obstacles.contains(x + "," + y + "," + z);
     }
 
+    public int getWidth() { return width; }
+    public int getHeight() { return height; }
+    public int getDepth() { return depth; }
 }
