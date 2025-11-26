@@ -33,7 +33,7 @@ public class ProbeTest {
             "DOWN,  2, 3, 4"
     })
     void shouldMoveForwardInAllDirections(Direction direction, int expectedX, int expectedY, int expectedZ) {
-        Grid grid = new Grid(6, 6, 6);
+        Grid grid = new Grid(10, 10, 10);
         Probe probe = new Probe(2, 3, 5, direction, grid);
         probe.moveForward();
         assertEquals(expectedX, probe.getX());
@@ -53,7 +53,7 @@ public class ProbeTest {
             "DOWN,  2, 3, 6"
     })
     void shouldMoveBackwardInAllDirections(Direction direction, int expectedX, int expectedY, int expectedZ) {
-        Grid grid = new Grid(6, 6, 6);
+        Grid grid = new Grid(10, 10, 10);
         Probe probe = new Probe(2, 3, 5, direction, grid);
         probe.moveBackward();
         assertEquals(expectedX, probe.getX());
@@ -99,7 +99,7 @@ public class ProbeTest {
 
     @Test
     void shouldNotMoveOutsideGridBounds() {
-        Grid grid = new Grid(5, 5, 5);
+        Grid grid = new Grid(10, 10, 10);
         Probe probe = new Probe(0, 0, 0, Direction.NORTH, grid);
         probe.moveBackward();
         assertEquals(0, probe.getX());
@@ -108,7 +108,7 @@ public class ProbeTest {
 
     @Test
     void shouldNotMoveIntoObstacles() {
-        Grid grid = new Grid(6, 6, 6);
+        Grid grid = new Grid(10, 10, 10);
         grid.addObstacle(3, 3, 5);
         Probe probe = new Probe(2, 3, 5, Direction.EAST, grid);
         probe.moveForward();
@@ -118,7 +118,7 @@ public class ProbeTest {
 
     @Test
     void shouldTrackVisitedCoordinates() {
-        Grid grid = new Grid(6, 6, 6);
+        Grid grid = new Grid(10, 10, 10);
         Probe probe = new Probe(0, 0, 0, Direction.NORTH, grid);
         probe.moveForward(); // (0,1,0)
         probe.moveForward(); // (0,2,0)
@@ -132,7 +132,7 @@ public class ProbeTest {
 
     @Test
     void shouldFaceUpAndDownUsingRotation() {
-        Grid grid = new Grid(6, 6, 6);
+        Grid grid = new Grid(10, 10, 10);
 
         // Horizontal -> UP
         Probe probeUp = new Probe(2, 3, 2, Direction.NORTH, grid);
@@ -147,7 +147,7 @@ public class ProbeTest {
 
     @Test
     void shouldNotTurnLeftOrRightWhenFacingVertical() {
-        Grid grid = new Grid(6, 6, 6);
+        Grid grid = new Grid(10, 10, 10);
 
         // When facing UP, L/R should do nothing
         Probe probeUp = new Probe(2, 3, 2, Direction.NORTH, grid);
@@ -168,7 +168,7 @@ public class ProbeTest {
 
     @Test
     void shouldMoveForwardAndBackwardWhenFacingVertical() {
-        Grid grid = new Grid(6, 6, 6);
+        Grid grid = new Grid(10, 10, 10);
 
         // Facing UP: forward -> z+1, backward -> z-1
         Probe upProbe = new Probe(2, 3, 2, Direction.NORTH, grid);

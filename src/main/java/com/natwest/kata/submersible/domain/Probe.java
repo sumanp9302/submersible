@@ -5,7 +5,6 @@ import com.natwest.kata.submersible.enums.Direction;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class Probe {
 
     private final Grid grid;
@@ -24,7 +23,7 @@ public class Probe {
         this.z = z;
         this.direction = direction;
         this.grid = grid;
-        this.lastHorizontalDirection = direction;
+        this.lastHorizontalDirection = direction; // assume initial is horizontal
         recordPosition();
     }
 
@@ -48,29 +47,28 @@ public class Probe {
         return visitedCoordinates;
     }
 
+    // --- movement in all 6 directions (Stage 3) ---
     public void moveForward() {
         switch (direction) {
             case NORTH -> move(0, 1, 0);
             case SOUTH -> move(0, -1, 0);
-            case EAST -> move(1, 0, 0);
-            case WEST -> move(-1, 0, 0);
-            case UP -> move(0, 0, 1);
-            case DOWN -> move(0, 0, -1);
+            case EAST  -> move(1, 0, 0);
+            case WEST  -> move(-1, 0, 0);
+            case UP    -> move(0, 0, 1);
+            case DOWN  -> move(0, 0, -1);
         }
     }
-
 
     public void moveBackward() {
         switch (direction) {
             case NORTH -> move(0, -1, 0);
             case SOUTH -> move(0, 1, 0);
-            case EAST -> move(-1, 0, 0);
-            case WEST -> move(1, 0, 0);
-            case UP -> move(0, 0, -1);
-            case DOWN -> move(0, 0, 1);
+            case EAST  -> move(-1, 0, 0);
+            case WEST  -> move(1, 0, 0);
+            case UP    -> move(0, 0, -1);
+            case DOWN  -> move(0, 0, 1);
         }
     }
-
 
     public void moveUp() {
         move(0, 0, 1);
@@ -82,10 +80,13 @@ public class Probe {
 
     public void turnUp() {
         if (direction == Direction.UP) return;
+
         if (direction == Direction.DOWN) {
+            // Coming up from DOWN → restore last horizontal
             direction = lastHorizontalDirection;
             return;
         }
+
         // horizontal → UP
         lastHorizontalDirection = direction;
         direction = Direction.UP;
@@ -93,7 +94,9 @@ public class Probe {
 
     public void turnDown() {
         if (direction == Direction.DOWN) return;
+
         if (direction == Direction.UP) {
+            // Coming down from UP → restore last horizontal
             direction = lastHorizontalDirection;
             return;
         }
@@ -106,25 +109,27 @@ public class Probe {
     public void turnLeft() {
         switch (direction) {
             case NORTH -> direction = Direction.WEST;
-            case WEST -> direction = Direction.SOUTH;
+            case WEST  -> direction = Direction.SOUTH;
             case SOUTH -> direction = Direction.EAST;
-            case EAST -> direction = Direction.NORTH;
-            case UP, DOWN -> { /* NOOP */ }
+            case EAST  -> direction = Direction.NORTH;
+            case UP, DOWN -> { /* NOOP when vertical */ }
         }
     }
 
     public void turnRight() {
         switch (direction) {
             case NORTH -> direction = Direction.EAST;
-            case EAST -> direction = Direction.SOUTH;
+            case EAST  -> direction = Direction.SOUTH;
             case SOUTH -> direction = Direction.WEST;
-            case WEST -> direction = Direction.NORTH;
-            case UP, DOWN -> { /* NOOP */ }
+            case WEST  -> direction = Direction.NORTH;
+            case UP, DOWN -> { /* NOOP when vertical */ }
         }
     }
 
     private void move(int dx, int dy, int dz) {
-        int newX = x + dx, newY = y + dy, newZ = z + dz;
+        int newX = x + dx;
+        int newY = y + dy;
+        int newZ = z + dz;
         if (grid.isWithinBounds(newX, newY, newZ) && !grid.isObstacle(newX, newY, newZ)) {
             x = newX;
             y = newY;
