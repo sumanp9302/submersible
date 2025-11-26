@@ -117,16 +117,18 @@ public class ProbeTest {
     @Test
     void shouldFaceUpAndDownUsingRotation() {
         Grid grid = new Grid(6, 6, 6);
-        Probe probe = new Probe(2, 3, 2, Direction.NORTH, grid);
 
-        // Rotate to UP
-        probe.turnUp();
-        assertEquals(Direction.UP, probe.getDirection());
+        // Horizontal -> UP
+        Probe probeUp = new Probe(2, 3, 2, Direction.NORTH, grid);
+        probeUp.turnUp();
+        assertEquals(Direction.UP, probeUp.getDirection());
 
-        // Rotate to DOWN
-        probe.turnDown();
-        assertEquals(Direction.DOWN, probe.getDirection());
+        // Horizontal -> DOWN
+        Probe probeDown = new Probe(2, 3, 2, Direction.EAST, grid);
+        probeDown.turnDown();
+        assertEquals(Direction.DOWN, probeDown.getDirection());
     }
+
 
     @Test
     void shouldNotTurnLeftOrRightWhenFacingVertical() {
@@ -152,22 +154,24 @@ public class ProbeTest {
     @Test
     void shouldMoveForwardAndBackwardWhenFacingVertical() {
         Grid grid = new Grid(6, 6, 6);
-        Probe probe = new Probe(2, 3, 2, Direction.NORTH, grid);
 
         // Facing UP: forward -> z+1, backward -> z-1
-        probe.turnUp();
-        probe.moveForward();
-        assertEquals(3, probe.getZ());
-        probe.moveBackward();
-        assertEquals(2, probe.getZ());
+        Probe upProbe = new Probe(2, 3, 2, Direction.NORTH, grid);
+        upProbe.turnUp();
+        upProbe.moveForward();
+        assertEquals(3, upProbe.getZ());
+        upProbe.moveBackward();
+        assertEquals(2, upProbe.getZ());
 
         // Facing DOWN: forward -> z-1, backward -> z+1
-        probe.turnDown();
-        probe.moveForward();
-        assertEquals(1, probe.getZ());
-        probe.moveBackward();
-        assertEquals(2, probe.getZ());
+        Probe downProbe = new Probe(2, 3, 2, Direction.NORTH, grid);
+        downProbe.turnDown();
+        downProbe.moveForward();
+        assertEquals(1, downProbe.getZ());
+        downProbe.moveBackward();
+        assertEquals(2, downProbe.getZ());
     }
+
 
     @Test
     void shouldTurnUpFromAnyHorizontalDirection() {

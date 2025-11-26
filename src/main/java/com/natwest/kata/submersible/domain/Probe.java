@@ -8,12 +8,13 @@ import java.util.List;
 
 public class Probe {
 
+    private final Grid grid;
+    private final List<String> visitedCoordinates = new ArrayList<>();
     private int x;
     private int y;
     private int z;
     private Direction direction;
-    private final Grid grid;
-    private final List<String> visitedCoordinates = new ArrayList<>();
+    private Direction lastHorizontalDirection;
 
     public Probe(int x, int y, int z, Direction direction, Grid grid) {
         if (direction == null) throw new IllegalArgumentException("Direction cannot be null");
@@ -23,6 +24,7 @@ public class Probe {
         this.z = z;
         this.direction = direction;
         this.grid = grid;
+        this.lastHorizontalDirection = direction;
         recordPosition();
     }
 
@@ -79,15 +81,26 @@ public class Probe {
     }
 
     public void turnUp() {
-        if (direction != Direction.UP) {
-            direction = Direction.UP;
+        if (direction == Direction.UP) return;
+        if (direction == Direction.DOWN) {
+            direction = lastHorizontalDirection;
+            return;
         }
+        // horizontal → UP
+        lastHorizontalDirection = direction;
+        direction = Direction.UP;
     }
 
     public void turnDown() {
-        if (direction != Direction.DOWN) {
-            direction = Direction.DOWN;
+        if (direction == Direction.DOWN) return;
+        if (direction == Direction.UP) {
+            direction = lastHorizontalDirection;
+            return;
         }
+
+        // horizontal → DOWN
+        lastHorizontalDirection = direction;
+        direction = Direction.DOWN;
     }
 
     public void turnLeft() {
@@ -96,12 +109,9 @@ public class Probe {
             case WEST -> direction = Direction.SOUTH;
             case SOUTH -> direction = Direction.EAST;
             case EAST -> direction = Direction.NORTH;
-            case UP, DOWN -> {
-                // No horizontal rotation when facing vertically
-            }
+            case UP, DOWN -> { /* NOOP */ }
         }
     }
-
 
     public void turnRight() {
         switch (direction) {
@@ -109,6 +119,7 @@ public class Probe {
             case EAST -> direction = Direction.SOUTH;
             case SOUTH -> direction = Direction.WEST;
             case WEST -> direction = Direction.NORTH;
+            case UP, DOWN -> { /* NOOP */ }
         }
     }
 
