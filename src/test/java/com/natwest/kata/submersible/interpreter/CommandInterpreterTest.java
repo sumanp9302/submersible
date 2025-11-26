@@ -31,6 +31,7 @@ public class CommandInterpreterTest {
         assertEquals(Direction.NORTH, probe.getDirection());
     }
 
+
     @Test
     void shouldRecordInvalidCommandsAndContinue() {
         Grid grid = new Grid(5, 5, 5);
@@ -40,16 +41,18 @@ public class CommandInterpreterTest {
         ExecutionResult result = interpreter.execute(List.of("F", "X", "R", "Y", "B"), probe);
 
         assertEquals(5, result.getTotalCommands());
-        assertEquals(0, result.getBlockedMoves());
+
+        // Backward while facing EAST attempts x-1 from 0 -> out of bounds -> blocked
+        assertEquals(1, result.getBlockedMoves());
+
         assertEquals(2, result.getInvalidCommands().size());
         assertEquals(1, result.getInvalidCommands().get(0).getIndex());
         assertEquals("X", result.getInvalidCommands().get(0).getCommand());
         assertEquals(3, result.getInvalidCommands().get(1).getIndex());
         assertEquals("Y", result.getInvalidCommands().get(1).getCommand());
 
-        // F: y+1; R: EAST; B while EAST means x-1? No—Backward opposite of EAST → WEST → x-1 blocked at 0?
-        // Careful: your Probe's moveBackward relative to EAST does x+1 (correct). So final x=1.
-        assertEquals(1, probe.getX());
+        // Final: F → (0,1,0); R → facing EAST; B → blocked (x stays 0)
+        assertEquals(0, probe.getX());
         assertEquals(1, probe.getY());
         assertEquals(Direction.EAST, probe.getDirection());
     }
