@@ -71,19 +71,32 @@ public class CommandInterpreterTest {
     @Test
     void shouldCountBlockedMovesForFandBOnly() {
         Grid grid = new Grid(2, 2, 2);
+        // Valid coordinates are x,y,z ∈ {0,1}
         Probe probe = new Probe(0, 0, 0, Direction.WEST, grid);
 
         CommandInterpreter interpreter = new CommandInterpreter();
 
-        ExecutionResult result = interpreter.execute(List.of("B", "D", "L"), probe);
+        ExecutionResult result = interpreter.execute(List.of("F", "D", "L"), probe);
 
-        // B when WEST → x-1 → -1 → blocked
-        // D is rotation, not movement → no block
-        // L is rotation → no block
+        // F when facing WEST: x-1 → -1 => blocked (no move)
+        // D: vertical rotation (no move, no block)
+        // L: horizontal rotation (no move, no block)
 
+        assertEquals(3, result.getTotalCommands());
         assertEquals(1, result.getBlockedMoves());
-        assertEquals(Direction.SOUTH, probe.getDirection());
+
+        // Position stays at origin since F was blocked
+        assertEquals(0, probe.getX());
+        assertEquals(0, probe.getY());
+        assertEquals(0, probe.getZ());
+        // Direction after D and L:
+        // Start WEST
+        // F (blocked, still WEST)
+        // D → turnDown (DOWN)
+        // L → no-op when vertical (DOWN)
+        assertEquals(Direction.DOWN, probe.getDirection());
     }
+
 
     @Test
     void shouldRotateUpAndDownUsingUAndDCommands() {
