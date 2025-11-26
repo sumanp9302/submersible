@@ -1,0 +1,318 @@
+openapi: 3.0.3
+info:
+  title: Submersible Probe Control API
+  version: 1.0.0
+  description: >
+    REST API to control a submersible probe exploring a 3D grid. The probe receives
+    commands (F/B/L/R/U/D), moves within grid boundaries, avoids obstacles, and
+    returns its final state, visited coordinates, and execution summary.
+
+servers:
+  - url: http://localhost:8080
+    description: Local development
+
+paths:
+  /api/probe/run:
+    post:
+      summary: Execute probe commands on a 3D grid
+      operationId: runProbe
+      description: >
+        Runs the probe on a 3D grid from a given starting position and direction,
+        executes the provided list of commands, and returns the final state,
+        visited coordinates, execution stats, and a human-readable summary.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RunRequest'
+            examples:
+              simpleRun:
+                summary: Basic run with obstacles
+                value:
+                  grid:
+                    width: 5
+                    height: 5
+                    depth: 5
+                  start:
+                    x: 0
+                    y: 0
+                    z: 0
+                  direction: NORTH
+                  commands: ["F", "R", "F", "U", "F"]
+                  obstacles:
+                    - x: 1
+                      y: 0
+                      z: 0
+                    - x: 2
+                      y: 2
+                      z: 1
+      responses:
+        '200':
+          description: Successful execution of probe commands
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunResponse'
+              examples:
+                success:
+                  summary: Successful probe execution with summary
+                  value:
+                    finalState:
+                      x: 1
+                      y: 1
+                      z: 1
+                      direction: UP
+                    visited:
+                      - "(0,0,0)"
+                      - "(0,1,0)"
+                      - "(1,1,0)"
+                      - "(1,1,1)"
+                    execution:
+                      totalCommands: 5
+                      executedCommands: 5
+                      blockedMoves: 0
+                      invalidCommands:
+                        - index: 3
+                          command: "X"
+                          reason: "Unknown command"
+                    grid:
+                      width: 5
+                      height: 5
+                      depth: 5
+                    summary: "Visited 4 positions on a 5x5x5 grid. Final position: (1,1,1) facing UP. Total commands: 5, executed: 5, blocked moves: 0, invalid commands: 1."
+        '400':
+          description: Malformed request payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: BAD_REQUEST
+                message: Malformed JSON request
+                details: "Unrecognized token at position 12"
+        '422':
+          description: Validation error (e.g. start position out of bounds, invalid grid dimensions)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: VALIDATION_ERROR
+                message: "Start position is out of bounds"
+                details: "Start (x=10,y=0,z=0) is outside the grid (width=5,height=5,depth=5)"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: INTERNAL_SERVER_ERROR
+                message: "Unexpected error while executing probe commands"
+                details: "Obstacle out of bounds at (10,0,0)"
+
+components:
+  schemas:
+    RunRequest:
+      type: object
+      required:
+        - grid
+        - start
+        - direction
+        - commands
+      properties:
+        grid:
+          $ref: '#/components/schemas/GridDto'
+        start:
+          $ref: '#/components/schemas/CoordinateDto'
+        direction:
+          $ref: '#/components/schemas/Direction'
+        commands:
+          type: array
+          description: >
+            Sequence of commands for the probe. Valid commands are:
+            F (forward), B (backward), L (turn left), R (turn right),
+            U (turn up), D (turn down). Invalid commands are skipped and
+            reported in the response.
+          items:
+            type: string
+            example: "F"
+        obstacles:
+          type: array
+          description: Optional list of obstacle coordinates. Movement into an obstacle is blocked.
+          items:
+            $ref: '#/components/schemas/CoordinateDto'
+
+    RunResponse:
+      type: object
+      properties:
+        finalState:
+          $ref: '#/components/schemas/FinalStateDto'
+        visited:
+          type: array
+          description: List of coordinates visited by the probe in order, including the starting position.
+          items:
+            type: string
+            example: "(0,0,0)"
+        execution:
+          $ref: '#/components/schemas/ExecutionDto'
+        grid:
+          $ref: '#/components/schemas/GridDto'
+        summary:
+          type: string
+          description: >
+            Human-readable summary of the run, including visited positions count,
+            grid size, final position and direction, and command statistics.
+
+    GridDto:
+      type: object
+      required:
+        - width
+        - height
+        - depth
+      properties:
+        width:
+          type: integer
+          format: int32
+          minimum: 1
+          description: Grid size along the x-axis. Valid x is 0..width-1.
+          example: 5
+        height:
+          type: integer
+          format: int32
+          minimum: 1
+          description: Grid size along the y-axis. Valid y is 0..height-1.
+          example: 5
+        depth:
+          type: integer
+          format: int32
+          minimum: 1
+          description: Grid size along the z-axis. Valid z is 0..depth-1.
+          example: 5
+
+    CoordinateDto:
+      type: object
+      required:
+        - x
+        - y
+        - z
+      properties:
+        x:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 0
+        y:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 0
+        z:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 0
+
+    FinalStateDto:
+      type: object
+      required:
+        - x
+        - y
+        - z
+        - direction
+      properties:
+        x:
+          type: integer
+          format: int32
+          example: 1
+        y:
+          type: integer
+          format: int32
+          example: 1
+        z:
+          type: integer
+          format: int32
+          example: 1
+        direction:
+          $ref: '#/components/schemas/Direction'
+
+    ExecutionDto:
+      type: object
+      required:
+        - totalCommands
+        - executedCommands
+        - blockedMoves
+        - invalidCommands
+      properties:
+        totalCommands:
+          type: integer
+          format: int32
+          description: Total number of commands received in the request.
+          example: 5
+        executedCommands:
+          type: integer
+          format: int32
+          description: Number of commands successfully executed (including no-op turns).
+          example: 5
+        blockedMoves:
+          type: integer
+          format: int32
+          description: >
+            Number of movement commands (F/B) that were blocked because they would
+            leave the grid or enter an obstacle.
+          example: 1
+        invalidCommands:
+          type: array
+          description: List of commands that were invalid and skipped.
+          items:
+            $ref: '#/components/schemas/InvalidCommandDto'
+
+    InvalidCommandDto:
+      type: object
+      required:
+        - index
+        - command
+        - reason
+      properties:
+        index:
+          type: integer
+          format: int32
+          description: Zero-based index of the command in the original list.
+          example: 3
+        command:
+          type: string
+          description: The original invalid command string.
+          example: "X"
+        reason:
+          type: string
+          description: Explanation why the command was considered invalid.
+          example: "Unknown command"
+
+    Direction:
+      type: string
+      description: Direction the probe is facing.
+      enum:
+        - NORTH
+        - SOUTH
+        - EAST
+        - WEST
+        - UP
+        - DOWN
+      example: NORTH
+
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Machine-readable error code.
+          example: VALIDATION_ERROR
+        message:
+          type: string
+          description: Human-readable error message.
+          example: "Start position is out of bounds"
+        details:
+          type: string
+          description: Optional additional information about the error.
+          example: "Start (x=10,y=0,z=0) is outside the grid (width=5,height=5,depth=5)"
