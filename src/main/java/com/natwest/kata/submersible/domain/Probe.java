@@ -42,19 +42,33 @@ public class Probe {
         return direction;
     }
 
-    public List<String> getVisitedCoordinates() { return visitedCoordinates; }
+    public List<String> getVisitedCoordinates() {
+        return visitedCoordinates;
+    }
 
     public void moveForward() {
-        move(direction == Direction.NORTH ? 0 : direction == Direction.SOUTH ? 0 :
-                        direction == Direction.EAST ? 1 : -1,
-                direction == Direction.NORTH ? 1 : direction == Direction.SOUTH ? -1 : 0, 0);
+        switch (direction) {
+            case NORTH -> move(0, 1, 0);
+            case SOUTH -> move(0, -1, 0);
+            case EAST -> move(1, 0, 0);
+            case WEST -> move(-1, 0, 0);
+            case UP -> move(0, 0, 1);
+            case DOWN -> move(0, 0, -1);
+        }
     }
 
+
     public void moveBackward() {
-        move(direction == Direction.NORTH ? 0 : direction == Direction.SOUTH ? 0 :
-                        direction == Direction.EAST ? -1 : 1,
-                direction == Direction.NORTH ? -1 : direction == Direction.SOUTH ? 1 : 0, 0);
+        switch (direction) {
+            case NORTH -> move(0, -1, 0);
+            case SOUTH -> move(0, 1, 0);
+            case EAST -> move(-1, 0, 0);
+            case WEST -> move(1, 0, 0);
+            case UP -> move(0, 0, -1);
+            case DOWN -> move(0, 0, 1);
+        }
     }
+
 
     public void moveUp() {
         move(0, 0, 1);
@@ -64,14 +78,30 @@ public class Probe {
         move(0, 0, -1);
     }
 
+    public void turnUp() {
+        if (direction != Direction.UP) {
+            direction = Direction.UP;
+        }
+    }
+
+    public void turnDown() {
+        if (direction != Direction.DOWN) {
+            direction = Direction.DOWN;
+        }
+    }
+
     public void turnLeft() {
         switch (direction) {
             case NORTH -> direction = Direction.WEST;
             case WEST -> direction = Direction.SOUTH;
             case SOUTH -> direction = Direction.EAST;
             case EAST -> direction = Direction.NORTH;
+            case UP, DOWN -> {
+                // No horizontal rotation when facing vertically
+            }
         }
     }
+
 
     public void turnRight() {
         switch (direction) {
@@ -82,16 +112,17 @@ public class Probe {
         }
     }
 
-
     private void move(int dx, int dy, int dz) {
         int newX = x + dx, newY = y + dy, newZ = z + dz;
         if (grid.isWithinBounds(newX, newY, newZ) && !grid.isObstacle(newX, newY, newZ)) {
-            x = newX; y = newY; z = newZ;
+            x = newX;
+            y = newY;
+            z = newZ;
             recordPosition();
         }
     }
 
-    public void recordPosition(){
+    public void recordPosition() {
         visitedCoordinates.add("(" + x + "," + y + "," + z + ")");
     }
 }
