@@ -1,0 +1,584 @@
+Below is a fresh regeneration of the 2D Probe Kata with a strict TDD flow.
+Each step includes the code introduced/changed and the exact Git commit message (so you can reproduce the Red → Green → Refactor trail verbatim).
+Scope: Minimal-but-clean implementation that satisfies all requirements:
+•	2D grid (x, y) with bounds
+•	Starting point & facing direction
+•	Commands: F(forward), B(backward), L(turn left), R(turn right)
+•	Stay on the grid; avoid obstacles
+•	Summary of visited coordinates
+•	REST API POST /api/probe/run
+•	Errors: 400 for validation; 422 for domain violations
+Stack: Java 21 · Spring Boot 3 · Maven · JUnit 5
+________________________________________
+🧱 Project Layout
+probe2d/
+├─ pom.xml
+├─ src/main/java/com/kata/probe2d/
+│  ├─ Probe2DApplication.java
+│  ├─ api/
+│  │  ├─ ProbeController.java
+│  │  ├─ GlobalExceptionHandler.java
+│  │  └─ dto/
+│  │     ├─ CoordinateDto.java
+│  │     ├─ GridDto.java
+│  │     ├─ RunRequest.java
+│  │     ├─ FinalStateDto.java
+│  │     ├─ ExecutionDto.java
+│  │     └─ RunResponse.java
+│  ├─ domain/
+│  │  ├─ Coordinate.java
+│  │  ├─ Direction.java
+│  │  ├─ Grid.java
+│  │  └─ Probe.java
+│  └─ service/
+│     └─ CommandInterpreter.java
+└─ src/test/java/com/kata/probe2d/
+   ├─ GridTest.java
+   ├─ ProbeTest.java
+   ├─ CommandInterpreterTest.java
+   └─ ProbeControllerTest.java
+________________________________________
+🔴🟢 REGENERATED TDD FLOW (with GIT commit message after each step)
+Use these exact messages when committing; they narrate the TDD trail.
+________________________________________
+STEP 0 — Bootstrap (chore)
+Files
+<!-- pom.xml -->
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.kata</groupId>
+  <artifactId>probe2d</artifactId>
+  <version>1.0.0</version>
+  <name>Probe 2D Kata</name>
+
+  <properties>
+    <java.version>21</java.version>
+    <spring.boot.version>3.3.5</spring.boot.version>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-dependencies</artifactId>
+        <version>${spring.boot.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-validation</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.11.0</version>
+        <configuration>
+          <release>${java.version}</release>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+</project>
+--------------------------------------------------------------------------------------------------------------
+
+// src/main/java/com/kata/probe2d/Probe2DApplication.java
+package com.kata.probe2d;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class Probe2DApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(Probe2DApplication.class, args);
+    }
+}
+
+GIT COMMIT MESSAGE
+chore: bootstrap Spring Boot 3 + Java 21 skeleton (pom + app)
+
+STEP 1 — RED: Grid bounds tests
+Files
+// src/test/java/com/kata/probe2d/GridTest.java
+package com.kata.probe2d;
+
+import com.kata.probe2d.domain.*;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class GridTest {
+    @Test void within_bounds() {
+        Grid g = new Grid(3, 3);
+        assertTrue(g.isWithinBounds(new Coordinate(0,0)));
+        assertTrue(g.isWithinBounds(new Coordinate(2,2)));
+    }
+    @Test void out_of_bounds() {
+        Grid g = new Grid(3, 3);
+        assertFalse(g.isWithinBounds(new Coordinate(-1,0)));
+        assertFalse(g.isWithinBounds(new Coordinate(3,0)));
+        assertFalse(g.isWithinBounds(new Coordinate(0,3)));
+    }
+}
+GIT COMMIT MESSAGE
+test: GridTest defines in-bounds and out-of-bounds behaviour (RED)
+
+STEP 2 — GREEN: Grid implementation
+Files
+// src/main/java/com/kata/probe2d/domain/Coordinate.java
+package com.kata.probe2d.domain;
+
+public record Coordinate(int x, int y) {}
+// src/main/java/com/kata/probe2d/domain/Grid.java
+package com.kata.probe2d.domain;
+
+import java.util.HashSet;
+import java.util.Set;
+
+public class Grid {
+    private final int width;
+    private final int height;
+    private final Set<Coordinate> obstacles = new HashSet<>();
+
+    public Grid(int width, int height) {
+        if (width <= 0 || height <= 0) throw new IllegalArgumentException("Invalid grid size");
+        this.width = width; this.height = height;
+    }
+
+    public boolean isWithinBounds(Coordinate c) {
+        return c.x() >= 0 && c.x() < width && c.y() >= 0 && c.y() < height;
+    }
+
+    public boolean isObstacle(Coordinate c) { return obstacles.contains(c); }
+
+    public void addObstacle(Coordinate c) { obstacles.add(c); }
+}
+
+GIT COMMIT MESSAGE
+feat: implement Grid with bounds and obstacle support (GREEN)
+
+
+STEP 3 — RED: Probe movement tests
+Files
+// src/test/java/com/kata/probe2d/ProbeTest.java
+package com.kata.probe2d;
+
+import com.kata.probe2d.domain.*;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class ProbeTest {
+    @Test void forward_move_is_recorded() {
+        Grid g = new Grid(3,3);
+        Probe p = new Probe(new Coordinate(0,0), Direction.NORTH, g);
+        assertTrue(p.moveForward());
+        assertEquals(new Coordinate(0,1), p.getPosition());
+        assertEquals(2, p.getVisited().size()); // start + after move
+    }
+    @Test void move_into_obstacle_is_blocked() {
+        Grid g = new Grid(3,3);
+        g.addObstacle(new Coordinate(0,1));
+        Probe p = new Probe(new Coordinate(0,0), Direction.NORTH, g);
+        assertFalse(p.moveForward());
+        assertEquals(new Coordinate(0,0), p.getPosition());
+        assertEquals(1, p.getVisited().size());
+    }
+    @Test void turn_updates_direction() {
+        Probe p = new Probe(new Coordinate(1,1), Direction.NORTH, new Grid(3,3));
+        p.turnLeft();  assertEquals(Direction.WEST, p.getDirection());
+        p.turnRight(); assertEquals(Direction.NORTH, p.getDirection());
+    }
+}
+GIT COMMIT MESSAGE
+test: ProbeTest describes movement, obstacle blocking, and turns (RED)
+
+
+STEP 4 — GREEN: Direction + Probe implementation
+Files
+// src/main/java/com/kata/probe2d/domain/Direction.java
+package com.kata.probe2d.domain;
+
+public enum Direction {
+    NORTH, EAST, SOUTH, WEST;
+
+    public Direction left() {
+        return switch (this) {
+            case NORTH -> WEST;
+            case WEST  -> SOUTH;
+            case SOUTH -> EAST;
+            case EAST  -> NORTH;
+        };
+    }
+
+    public Direction right() {
+        return switch (this) {
+            case NORTH -> EAST;
+            case EAST  -> SOUTH;
+            case SOUTH -> WEST;
+            case WEST  -> NORTH;
+        };
+    }
+
+    public int dxForward() {
+        return switch (this) {
+            case EAST -> 1;
+            case WEST -> -1;
+            default -> 0;
+        };
+    }
+
+    public int dyForward() {
+        return switch (this) {
+            case NORTH -> 1;
+            case SOUTH -> -1;
+            default -> 0;
+        };
+    }
+}
+
+
+// src/main/java/com/kata/probe2d/domain/Probe.java
+package com.kata.probe2d.domain;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class Probe {
+    private Coordinate position;
+    private Direction direction;
+    private final Grid grid;
+    private final List<Coordinate> visited = new ArrayList<>();
+
+    public Probe(Coordinate start, Direction direction, Grid grid) {
+        if (!grid.isWithinBounds(start)) throw new IllegalArgumentException("Start out of bounds");
+        if (grid.isObstacle(start)) throw new IllegalArgumentException("Start is an obstacle");
+        this.position = start;
+        this.direction = direction;
+        this.grid = grid;
+        visited.add(start);
+    }
+
+    public boolean moveForward() {
+        Coordinate next = new Coordinate(
+            position.x() + direction.dxForward(),
+            position.y() + direction.dyForward()
+        );
+        return applyMove(next);
+    }
+
+    public boolean moveBackward() {
+        Coordinate next = new Coordinate(
+            position.x() - direction.dxForward(),
+            position.y() - direction.dyForward()
+        );
+        return applyMove(next);
+    }
+
+    public void turnLeft()  { direction = direction.left(); }
+    public void turnRight() { direction = direction.right(); }
+
+    private boolean applyMove(Coordinate next) {
+        if (!grid.isWithinBounds(next)) return false;      // blocked: out of bounds
+        if (grid.isObstacle(next)) return false;           // blocked: obstacle
+        this.position = next;
+        visited.add(next);
+        return true;
+    }
+
+    public Coordinate getPosition() { return position; }
+    public Direction getDirection() { return direction; }
+    public List<Coordinate> getVisited() { return List.copyOf(visited); }
+}
+
+GIT COMMIT MESSAGE
+feat: implement Direction and Probe to satisfy movement & turns (GREEN)
+
+STEP 5 — RED: Interpreter tests (valid/invalid/blocked)
+Files
+
+// src/test/java/com/kata/probe2d/CommandInterpreterTest.java
+package com.kata.probe2d;
+
+import com.kata.probe2d.domain.*;
+import com.kata.probe2d.service.CommandInterpreter;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class CommandInterpreterTest {
+    @Test void invalid_and_blocked_are_counted() {
+        Grid g = new Grid(2,2);
+        g.addObstacle(new Coordinate(0,1));
+        Probe p = new Probe(new Coordinate(0,0), Direction.NORTH, g);
+
+        var r = new CommandInterpreter().execute(p, List.of("F","X",null,"F","B"));
+        // F -> blocked (obstacle), X -> invalid, null -> invalid, F -> blocked, B -> executed
+        assertEquals(1, r.executed);
+        assertEquals(2, r.blocked);
+        assertEquals(2, r.invalid);
+    }
+}
+GIT COMMIT MESSAGE
+test: CommandInterpreterTest captures executed/blocked/invalid metrics (RED)
+
+STEP 6 — GREEN: Interpreter implementation
+Files
+// src/main/java/com/kata/probe2d/service/CommandInterpreter.java
+package com.kata.probe2d.service;
+
+import com.kata.probe2d.domain.Probe;
+import java.util.List;
+
+public class CommandInterpreter {
+
+    public static class Result {
+        public int executed;
+        public int blocked;
+        public int invalid;
+    }
+
+    public Result execute(Probe probe, List<String> commands) {
+        Result r = new Result();
+        if (commands == null) return r;
+
+        for (String c : commands) {
+            if (c == null) { r.invalid++; continue; }
+            switch (c) {
+                case "F" -> { if (probe.moveForward()) r.executed++; else r.blocked++; }
+                case "B" -> { if (probe.moveBackward()) r.executed++; else r.blocked++; }
+                case "L" -> { probe.turnLeft();  r.executed++; }
+                case "R" -> { probe.turnRight(); r.executed++; }
+                default   -> r.invalid++;
+            }
+        }
+        return r;
+    }
+}
+GIT COMMIT MESSAGE
+feat: implement CommandInterpreter with minimal metrics tracking (GREEN)
+
+STEP 7 — RED: Controller tests (happy path, 400, 422)
+Files
+// src/test/java/com/kata/probe2d/ProbeControllerTest.java
+package com.kata.probe2d;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.web.servlet.MockMvc;
+
+import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
+@AutoConfigureMockMvc
+class ProbeControllerTest {
+
+    @Autowired MockMvc mvc;
+
+    @Test void happy_path_200_ok() throws Exception {
+        String body = """
+          { "grid":{"width":5,"height":5},
+            "start":{"x":0,"y":0}, "direction":"NORTH",
+            "commands":["F","R","F"],
+            "obstacles":[{"x":2,"y":1}] }
+        """;
+        mvc.perform(post("/api/probe/run").contentType(APPLICATION_JSON).content(body))
+           .andExpect(status().isOk())
+           .andExpect(jsonPath("$.finalState.direction").value("EAST"))
+           .andExpect(jsonPath("$.visited.length()").value(3));
+    }
+
+    @Test void negative_coordinates_400() throws Exception {
+        String body = """
+          { "grid":{"width":5,"height":5},
+            "start":{"x":-1,"y":0}, "direction":"NORTH",
+            "commands":["F"] }
+        """;
+        mvc.perform(post("/api/probe/run").contentType(APPLICATION_JSON).content(body))
+           .andExpect(status().isBadRequest());
+    }
+
+    @Test void start_on_obstacle_422() throws Exception {
+        String body = """
+          { "grid":{"width":5,"height":5},
+            "start":{"x":2,"y":1}, "direction":"NORTH",
+            "commands":["F"], "obstacles":[{"x":2,"y":1}] }
+        """;
+        mvc.perform(post("/api/probe/run").contentType(APPLICATION_JSON).content(body))
+           .andExpect(status().isUnprocessableEntity());
+    }
+}
+GIT COMMIT MESSAGE
+test: ProbeControllerTest for 200 OK, 400 validation, and 422 domain errors (RED)
+
+STEP 8 — GREEN: DTOs + Controller implementation
+Files
+// src/main/java/com/kata/probe2d/api/dto/GridDto.java
+package com.kata.probe2d.api.dto;
+import jakarta.validation.constraints.Min;
+public class GridDto { @Min(1) public int width; @Min(1) public int height; }
+
+// src/main/java/com/kata/probe2d/api/dto/CoordinateDto.java
+package com.kata.probe2d.api.dto;
+import jakarta.validation.constraints.Min;
+public class CoordinateDto { @Min(0) public int x; @Min(0) public int y; }
+
+// src/main/java/com/kata/probe2d/api/dto/RunRequest.java
+package com.kata.probe2d.api.dto;
+import jakarta.validation.constraints.NotNull;
+import java.util.List;
+
+public class RunRequest {
+    @NotNull public GridDto grid;
+    @NotNull public CoordinateDto start;
+    @NotNull public String direction;     // "NORTH" | "EAST" | "SOUTH" | "WEST"
+    @NotNull public List<String> commands;
+    public List<CoordinateDto> obstacles = List.of();
+}
+
+// src/main/java/com/kata/probe2d/api/dto/FinalStateDto.java
+package com.kata.probe2d.api.dto;
+public class FinalStateDto {
+    public int x; public int y; public String direction;
+    public FinalStateDto(int x, int y, String direction) { this.x = x; this.y = y; this.direction = direction; }
+}
+
+// src/main/java/com/kata/probe2d/api/dto/ExecutionDto.java
+package com.kata.probe2d.api.dto;
+public class ExecutionDto {
+    public int executed; public int blocked; public int invalid;
+    public ExecutionDto(int executed, int blocked, int invalid) { this.executed = executed; this.blocked = blocked; this.invalid = invalid; }
+}
+
+// src/main/java/com/kata/probe2d/api/dto/RunResponse.java
+package com.kata.probe2d.api.dto;
+import java.util.List;
+public class RunResponse {
+    public FinalStateDto finalState;
+    public List<CoordinateDto> visited;
+    public ExecutionDto execution;
+    public RunResponse(FinalStateDto fs, List<CoordinateDto> visited, ExecutionDto ex) { this.finalState = fs; this.visited = visited; this.execution = ex; }
+}
+
+// src/main/java/com/kata/probe2d/api/ProbeController.java
+package com.kata.probe2d.api;
+
+import com.kata.probe2d.api.dto.*;
+import com.kata.probe2d.domain.*;
+import com.kata.probe2d.service.CommandInterpreter;
+import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/probe")
+public class ProbeController {
+
+    @PostMapping("/run")
+    public ResponseEntity<RunResponse> run(@Valid @RequestBody RunRequest req) {
+        Grid grid = new Grid(req.grid.width, req.grid.height);
+        if (req.obstacles != null) {
+            req.obstacles.forEach(o -> grid.addObstacle(new Coordinate(o.x, o.y)));
+        }
+
+        Direction dir = Direction.valueOf(req.direction);
+        Probe probe = new Probe(new Coordinate(req.start.x, req.start.y), dir, grid);
+
+        CommandInterpreter.Result result = new CommandInterpreter().execute(probe, req.commands);
+
+        FinalStateDto fs = new FinalStateDto(
+                probe.getPosition().x(),
+                probe.getPosition().y(),
+                probe.getDirection().name()
+        );
+
+        List<CoordinateDto> visited = probe.getVisited().stream()
+                .map(c -> { CoordinateDto d = new CoordinateDto(); d.x = c.x(); d.y = c.y(); return d; })
+                .toList();
+
+        ExecutionDto ex = new ExecutionDto(result.executed, result.blocked, result.invalid);
+        return ResponseEntity.ok(new RunResponse(fs, visited, ex));
+    }
+}
+
+GIT COMMIT MESSAGE
+feat: implement DTOs and ProbeController for /api/probe/run (GREEN)
+STEP 9 — GREEN: Global exception handling (400/422)
+Files
+// src/main/java/com/kata/probe2d/api/GlobalExceptionHandler.java
+package com.kata.probe2d.api;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+
+import java.util.Map;
+
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String,Object>> handleValidation(MethodArgumentNotValidException ex){
+        return ResponseEntity.badRequest().body(Map.of(
+            "error", Map.of("code", "VALIDATION_ERROR", "message", "Payload validation failed")
+        ));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String,Object>> handleDomain(IllegalArgumentException ex){
+        return ResponseEntity.unprocessableEntity().body(Map.of(
+            "error", Map.of("code", "VALIDATION_ERROR", "message", ex.getMessage())
+        ));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String,Object>> handleMalformed(HttpMessageNotReadableException ex){
+        return ResponseEntity.badRequest().body(Map.of(
+            "error", Map.of("code", "VALIDATION_ERROR", "message", "Malformed JSON")
+        ));
+    }
+}
+GIT COMMIT MESSAGE
+feat: add GlobalExceptionHandler mapping 400 (validation) and 422 (domain) (GREEN)
+
+STEP 10 — REFACTOR: Minor tidy-up
+•	Light naming/comment clean-up.
+•	No behaviour change; tests stay green.
+GIT COMMIT MESSAGE
+refactor: minor naming tidy-up and DTO mapping helper (no behaviour change)
+
