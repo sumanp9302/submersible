@@ -30,14 +30,11 @@ class ProbeRunServiceTest {
 
     @Test
     void emptyCommands_keepsInitialState_andZeroExecutionTotals() {
-        // given
         RunRequest req = baseRequest();
-        req.setCommands(Collections.emptyList()); // empty commands
+        req.setCommands(Collections.emptyList());
 
-        // when
         RunResponse resp = service.run(req);
 
-        // then: final state equals initial state
         FinalStateDto finalState = resp.getFinalState();
         assertNotNull(finalState);
         assertEquals(req.getStart().getX(), finalState.getX());
@@ -45,7 +42,6 @@ class ProbeRunServiceTest {
         assertEquals(req.getStart().getZ(), finalState.getZ());
         assertEquals(req.getDirection(), finalState.getDirection());
 
-        // and: execution totals are all zero
         ExecutionDto execution = resp.getExecution();
         assertNotNull(execution);
         assertEquals(0, execution.getTotalCommands());
@@ -56,7 +52,6 @@ class ProbeRunServiceTest {
 
     @Test
     void startOnObstacle_throwsIllegalArgumentException() {
-        // given
         RunRequest req = baseRequest();
         CoordinateDto start = req.getStart();
 
@@ -65,7 +60,6 @@ class ProbeRunServiceTest {
         ));
         req.setCommands(Collections.emptyList());
 
-        // when / then
         IllegalArgumentException ex = assertThrows(
                 IllegalArgumentException.class,
                 () -> service.run(req)
@@ -79,7 +73,6 @@ class ProbeRunServiceTest {
 
     @Test
     void duplicateObstacles_doNotChangeResult() {
-        // given
         GridDto grid = new GridDto(5, 5, 5);
         CoordinateDto start = new CoordinateDto(0, 0, 0);
         Direction direction = Direction.EAST;
@@ -99,13 +92,11 @@ class ProbeRunServiceTest {
         duplicate.setStart(start);
         duplicate.setDirection(direction);
         duplicate.setCommands(commands);
-        duplicate.setObstacles(List.of(obstacle, obstacle)); // duplicate entries
+        duplicate.setObstacles(List.of(obstacle, obstacle));
 
-        // when
         RunResponse respSingle = service.run(single);
         RunResponse respDup = service.run(duplicate);
 
-        // then: same final state
         FinalStateDto fsSingle = respSingle.getFinalState();
         FinalStateDto fsDup = respDup.getFinalState();
 
@@ -114,7 +105,6 @@ class ProbeRunServiceTest {
         assertEquals(fsSingle.getZ(), fsDup.getZ());
         assertEquals(fsSingle.getDirection(), fsDup.getDirection());
 
-        // and: same execution counters
         ExecutionDto exSingle = respSingle.getExecution();
         ExecutionDto exDup = respDup.getExecution();
 
@@ -123,7 +113,29 @@ class ProbeRunServiceTest {
         assertEquals(exSingle.getBlockedMoves(), exDup.getBlockedMoves());
         assertEquals(exSingle.getInvalidCommands().size(), exDup.getInvalidCommands().size());
 
-        // and: same visited path
         assertEquals(respSingle.getVisited(), respDup.getVisited());
+    }
+
+    @Test
+    void largeCommandList_isHandledWithinGridBounds() {
+        RunRequest req = new RunRequest();
+        req.setGrid(new GridDto(100, 100, 100));
+        req.setStart(new CoordinateDto(0, 0, 0));
+        req.setDirection(Direction.NORTH);
+        req.setObstacles(Collections.emptyList());
+
+        // 10,000 forward commands
+        List<String> commands = Collections.nCopies(10_000, "F");
+        req.setCommands(commands);
+
+        RunResponse resp = assertDoesNotThrow(() -> service.run(req));
+
+        FinalStateDto finalState = resp.getFinalState();
+        assertNotNull(finalState);
+
+        GridDto grid = req.getGrid();
+        assertTrue(finalState.getX() >= 0 && finalState.getX() < grid.getWidth());
+        assertTrue(finalState.getY() >= 0 && finalState.getY() < grid.getHeight());
+        assertTrue(finalState.getZ() >= 0 && finalState.getZ() < grid.getDepth());
     }
 }
