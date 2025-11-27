@@ -10,6 +10,7 @@ import com.natwest.kata.submersible.enums.Direction;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -59,7 +60,6 @@ class ProbeRunServiceTest {
         RunRequest req = baseRequest();
         CoordinateDto start = req.getStart();
 
-        // Put an obstacle exactly at the start position
         req.setObstacles(Collections.singletonList(
                 new CoordinateDto(start.getX(), start.getY(), start.getZ())
         ));
@@ -75,5 +75,55 @@ class ProbeRunServiceTest {
                 ex.getMessage().toLowerCase().contains("obstacle"),
                 "Exception message should mention obstacle"
         );
+    }
+
+    @Test
+    void duplicateObstacles_doNotChangeResult() {
+        // given
+        GridDto grid = new GridDto(5, 5, 5);
+        CoordinateDto start = new CoordinateDto(0, 0, 0);
+        Direction direction = Direction.EAST;
+        List<String> commands = List.of("F", "F", "F");
+
+        CoordinateDto obstacle = new CoordinateDto(1, 0, 0);
+
+        RunRequest single = new RunRequest();
+        single.setGrid(grid);
+        single.setStart(start);
+        single.setDirection(direction);
+        single.setCommands(commands);
+        single.setObstacles(Collections.singletonList(obstacle));
+
+        RunRequest duplicate = new RunRequest();
+        duplicate.setGrid(grid);
+        duplicate.setStart(start);
+        duplicate.setDirection(direction);
+        duplicate.setCommands(commands);
+        duplicate.setObstacles(List.of(obstacle, obstacle)); // duplicate entries
+
+        // when
+        RunResponse respSingle = service.run(single);
+        RunResponse respDup = service.run(duplicate);
+
+        // then: same final state
+        FinalStateDto fsSingle = respSingle.getFinalState();
+        FinalStateDto fsDup = respDup.getFinalState();
+
+        assertEquals(fsSingle.getX(), fsDup.getX());
+        assertEquals(fsSingle.getY(), fsDup.getY());
+        assertEquals(fsSingle.getZ(), fsDup.getZ());
+        assertEquals(fsSingle.getDirection(), fsDup.getDirection());
+
+        // and: same execution counters
+        ExecutionDto exSingle = respSingle.getExecution();
+        ExecutionDto exDup = respDup.getExecution();
+
+        assertEquals(exSingle.getTotalCommands(), exDup.getTotalCommands());
+        assertEquals(exSingle.getExecutedCommands(), exDup.getExecutedCommands());
+        assertEquals(exSingle.getBlockedMoves(), exDup.getBlockedMoves());
+        assertEquals(exSingle.getInvalidCommands().size(), exDup.getInvalidCommands().size());
+
+        // and: same visited path
+        assertEquals(respSingle.getVisited(), respDup.getVisited());
     }
 }
