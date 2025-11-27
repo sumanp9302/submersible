@@ -153,4 +153,22 @@ class ProbeControllerTest {
                 .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
                 .andExpect(jsonPath("$.error.message").value("Obstacle out of bounds"));
     }
+
+    @Test
+    void runShouldReturn422WhenCoordinatesAreNegative() throws Exception {
+        // given: negative start coordinates (violates @Min(0))
+        RunRequest req = new RunRequest();
+        req.setGrid(new GridDto(5, 5, 5));
+        req.setStart(new CoordinateDto(-1, 0, 0)); // invalid x
+        req.setDirection(Direction.NORTH);
+        req.setCommands(List.of("F"));
+        req.setObstacles(Collections.emptyList());
+
+        mvc.perform(post("/api/probe/run")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(req)))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.error.message").isNotEmpty());
+    }
 }
