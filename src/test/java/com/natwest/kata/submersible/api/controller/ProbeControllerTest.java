@@ -11,6 +11,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import com.natwest.kata.submersible.api.dto.CoordinateDto;
 
 import java.util.List;
 
@@ -92,5 +93,37 @@ class ProbeControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.summary").isNotEmpty());
     }
+
+    @Test
+    void runShouldReturn400ForMalformedJsonRequest() throws Exception {
+        // given - intentionally malformed JSON body
+        String malformedJson = "{ invalid json";
+
+        mvc.perform(post("/api/probe/run")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(malformedJson))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.error.message").value("Malformed JSON request"));
+    }
+
+    @Test
+    void runShouldReturn422WhenMandatoryFieldIsMissing() throws Exception {
+        // given - missing grid
+        RunRequest req = new RunRequest();
+        req.setGrid(null); // <-- violates @NotNull
+        req.setStart(new CoordinateDto(0, 0, 0));  // <-- correct DTO
+        req.setDirection(Direction.NORTH);
+        req.setCommands(List.of("F"));
+
+        mvc.perform(post("/api/probe/run")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(req)))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.error.message").isNotEmpty());
+    }
+
+
 
 }
