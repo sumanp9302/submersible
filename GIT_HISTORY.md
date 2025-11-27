@@ -1,256 +1,367 @@
-# TDD Git History (Narrative Log)
+# TDD Git History (Narrative Summary)
 
-> This file describes the intended TDD-style evolution of the submersible probe API.
-> It is a human-readable summary of commits, not the actual `git log` output.
+This document describes the intended TDD-style evolution of the Submersible Probe
+Control API. It is a human-readable summary of the key commits, not a literal
+`git log`.
+
+Each step follows the basic TDD loop: **RED → GREEN → REFACTOR**, with small,
+focused commits.
 
 ---
 
-## 1. Project bootstrap
+## 1. Project Bootstrap
 
 **Commit:** `chore: bootstrap Spring Boot probe API`
 
 - Initialize Spring Boot project structure.
-- Add `SubmersibleApplication` entry point.
-- Add basic Maven configuration (`pom.xml`) with:
+- Add main application class: `SubmersibleApplication`.
+- Configure `pom.xml` with:
     - Spring Web
-    - Validation
-    - Test dependencies (JUnit 5, Spring Boot Test)
+    - Validation (jakarta)
+    - Spring Boot test dependencies (JUnit 5, MockMvc)
 
 ---
 
-## 2. First domain spec – Grid bounds
+## 2. Grid Bounds Specification
 
 **Commit:** `test: introduce GridTest for 3D bounds`
 
-- Add `GridTest` as the first domain-level specification.
-- Define expectations for:
-    - Valid coordinates being inside bounds
-    - Out-of-bounds coordinates being rejected
-- No production implementation yet (tests initially fail).
+- Add `GridTest` to define expected behaviour of the 3D grid:
+    - In-bounds vs out-of-bounds coordinates.
+    - Basic grid dimension rules.
+- No production `Grid` implementation yet → tests fail (RED).
 
 ---
 
-## 3. Implement 3D grid with obstacle support
+## 3. Grid Implementation With Obstacles
 
 **Commit:** `feat: implement Grid with bounds and obstacles`
 
-- Implement `Grid` domain type with:
+- Implement `Grid` domain class with:
     - `width`, `height`, `depth`
-    - `isWithinBounds(x,y,z)`
-    - `addObstacle(x,y,z)` and `isObstacle(x,y,z)`
-- Store obstacles as `Set<String>` to naturally deduplicate duplicates.
-- Make `GridTest` pass.
+    - `isWithinBounds(x, y, z)`
+    - Obstacle support via `addObstacle(x, y, z)` and `isObstacle(...)`
+- Use a `Set<String>` to store obstacles, so duplicates are naturally ignored.
+- Make `GridTest` pass (GREEN).
 
 ---
 
-## 4. Probe movement spec
+## 4. Probe Movement Specification
 
 **Commit:** `test: define probe movement and turning behaviour`
 
-- Add `ProbeTest` with scenarios for:
-    - Initializing a probe at (x,y,z) with a direction.
-    - Turning left/right/up/down from different initial orientations.
-    - Moving forwards/backwards while respecting bounds and obstacles.
-    - Tracking visited coordinates over time.
-- Tests initially fail until `Probe` is implemented.
+- Add `ProbeTest` describing:
+    - Initialisation at a given `(x, y, z)` with `Direction`.
+    - Turning left/right/up/down.
+    - Moving forward/backward depending on direction.
+    - Staying within grid bounds.
+    - Preventing movement into obstacles.
+    - Tracking visited coordinates.
+- No `Probe` implementation yet → tests fail (RED).
 
 ---
 
-## 5. Implement Probe domain
+## 5. Probe Domain Implementation
 
 **Commit:** `feat: implement Probe with movement and visited tracking`
 
-- Implement `Probe` domain object:
-    - Encapsulate current (x,y,z) and `Direction`.
-    - Implement `moveForward`, `moveBackward`, `turnLeft`, `turnRight`, `turnUp`, `turnDown`.
-    - Use `Grid` to prevent out-of-bounds and obstacle collisions.
-    - Record all visited coordinates (including starting position).
-- Make `ProbeTest` pass.
+- Implement `Probe`:
+    - Fields for current coordinates and `Direction`.
+    - Methods: `moveForward`, `moveBackward`, `turnLeft`, `turnRight`, `turnUp`, `turnDown`.
+    - Use `Grid` to block moves going out-of-bounds or onto obstacles.
+    - Maintain `visitedCoordinates`, recording starting position and every valid move.
+- Make all `ProbeTest` cases pass (GREEN).
 
 ---
 
-## 6. Command interpreter spec
+## 6. Command Interpreter Specification
 
 **Commit:** `test: define interpreter behaviour for valid and invalid commands`
 
-- Add `CommandInterpreterTest` describing:
+- Add `CommandInterpreterTest` that specifies:
     - Handling of valid commands: `F`, `B`, `L`, `R`, `U`, `D`.
-    - Behaviour when encountering invalid commands (unknown symbols, multi-character tokens, `null`).
-    - Aggregation of execution metrics:
-        - total commands
-        - executed commands
-        - blocked moves
-        - invalid commands list
-- Tests initially fail.
+    - Handling of invalid commands (`null`, unknown symbols, multi-char tokens).
+    - Tracking:
+        - `totalCommands`
+        - `executedCommands`
+        - `blockedMoves`
+        - `invalidCommands` list (index + command + reason).
+- Interpreter not implemented yet → tests fail (RED).
 
 ---
 
-## 7. Implement CommandInterpreter and ExecutionResult
+## 7. Command Interpreter Implementation
 
 **Commit:** `feat: implement CommandInterpreter and execution result model`
 
 - Implement `CommandInterpreter`:
-    - Interpret each command string and call appropriate `Probe` methods.
-    - Count `totalCommands`, `executedCommands`, `blockedMoves`.
-    - Record invalid commands in an `InvalidCommand` / `InvalidCommandDto` list.
-- Introduce `ExecutionResult` as an internal summary type.
-- Make all `CommandInterpreterTest` cases pass.
+    - Loop over each command string and invoke the proper `Probe` method.
+    - Distinguish between movement commands and turns.
+    - When a move does not change the probe’s position, increment `blockedMoves`.
+    - Record invalid commands with index and reason.
+- Introduce internal execution result model and map it to DTO later.
+- All `CommandInterpreterTest` tests now pass (GREEN).
 
 ---
 
-## 8. Service-layer orchestration spec
+## 8. Service Orchestration Specification
 
-**Commit:** `test: describe ProbeRunService orchestration from request to response`
+**Commit:** `test: describe ProbeRunService end-to-end behaviour`
 
-- Add `ProbeRunServiceTest` to specify:
-    - How `RunRequest` is transformed into domain objects (`Grid`, `Probe`).
-    - How `CommandInterpreter` is used.
-    - What `RunResponse` should contain:
-        - `finalState`
-        - `visited`
-        - `execution` metrics
-        - textual `summary`
-- Tests start as failing until service is wired up.
+- Add `ProbeRunServiceTest` specifying:
+    - How `RunRequest` gets converted into `Grid`, `Probe` and command execution.
+    - How final state is reflected in `RunResponse`.
+    - That visited coordinates and execution statistics are exposed.
+    - High-level textual summary requirements.
+- Service not implemented yet → tests fail (RED).
 
 ---
 
-## 9. Implement ProbeRunService
+## 9. ProbeRunService Implementation
 
-**Commit:** `feat: implement ProbeRunService and RunResponse mapping`
+**Commit:** `feat: implement ProbeRunService run() orchestration`
 
 - Implement `ProbeRunService.run(RunRequest)`:
     - Build `Grid` from `GridDto` and add obstacles.
     - Validate start position is within bounds.
-    - Create `Probe` using the domain model.
-    - Call `CommandInterpreter` to execute commands.
-    - Map final probe state + execution metrics + visited coordinates into `RunResponse`.
-    - Build a human-readable execution summary string.
-- Make `ProbeRunServiceTest` pass.
+    - Create `Probe` with start coordinates and direction.
+    - Use `CommandInterpreter` to execute commands.
+    - Map final state, metrics, and visited path into `RunResponse`.
+    - Build a human-readable summary (`summary` field).
+- All `ProbeRunServiceTest` tests pass (GREEN).
 
 ---
 
-## 10. Controller happy-path spec
+## 10. Controller Happy-Path Specification
 
-**Commit:** `test: cover /api/probe/run happy path`
+**Commit:** `test: add happy-path controller test for /api/probe/run`
 
-- Add `ProbeControllerTest` with Spring `@WebMvcTest`:
-    - POST `/api/probe/run` with a valid `RunRequest`.
-    - Assert HTTP 200.
-    - Assert `finalState`, `visited`, and `execution` are present and consistent.
-    - Assert `summary` is non-empty.
-- Tests fail until controller is implemented.
+- Add `ProbeControllerTest` to verify:
+    - POST `/api/probe/run` with a valid payload returns HTTP 200.
+    - Response contains non-null final state, execution, visited, and summary.
+- Controller not implemented yet → tests fail (RED).
 
 ---
 
-## 11. Implement ProbeController
+## 11. Controller Implementation
 
-**Commit:** `feat: expose /api/probe/run REST endpoint`
+**Commit:** `feat: expose /api/probe/run endpoint`
 
 - Implement `ProbeController`:
-    - `POST /api/probe/run` accepting a `@Valid RunRequest`.
-    - Delegate to `ProbeRunService`.
-    - Return `RunResponse` with HTTP 200.
-- Make the controller happy-path test pass.
+    - `POST /api/probe/run` that accepts `@Valid RunRequest`.
+    - Delegates to `ProbeRunService`.
+    - Wraps `RunResponse` in HTTP 200.
+- Happy-path controller test passes (GREEN).
 
 ---
 
-## 12. Global error handling spec
+## 12. Error Handling Specification
 
 **Commit:** `test: define API behaviour for invalid requests`
 
-- Extend `ProbeControllerTest` to cover:
-    - Out-of-bounds start coordinates resulting in an error response.
-    - Validation and domain errors returning:
-        - an `error.code` of `"VALIDATION_ERROR"`
-        - an `error.message` describing the issue.
-- Tests initially fail.
+- Extend controller tests to expect structured JSON errors for:
+    - Payload validation failures.
+    - Domain validation failures (e.g. invalid start position).
+- No global handler yet → tests fail or default error format used (RED).
 
 ---
 
-## 13. Implement ErrorResponse and GlobalExceptionHandler
+## 13. Global Exception Handling Implementation
 
-**Commit:** `feat: add structured error responses and exception mapping`
+**Commit:** `feat: implement GlobalExceptionHandler and ErrorResponse`
 
-- Add `ErrorResponse` with:
+- Implement `ErrorResponse` with:
     - `ErrorBody` (code, message, details, traceId).
     - `ErrorDetail` (field, issue).
-    - A helper factory `ErrorResponse.validation(...)`.
-- Add `GlobalExceptionHandler` with handlers for:
-    - `MethodArgumentNotValidException` (e.g. missing required fields) → 422
-    - `IllegalArgumentException` (business validation) → 422
-    - `ConstraintViolationException` → 400 with field-level details
-    - `HttpMessageNotReadableException` (malformed JSON) → 400
-- Make error-path controller tests pass.
+- Implement `GlobalExceptionHandler` with mappings for:
+    - `MethodArgumentNotValidException` → 400 + validation error payload.
+    - `ConstraintViolationException` → 400 + constraint details.
+    - `HttpMessageNotReadableException` → 400 + “Malformed JSON request”.
+- Basic error-path tests now pass (GREEN).
 
 ---
 
-## 14. Edge case spec – empty commands
+## 14. Edge Case – Empty Command List
 
 **Commit:** `test: document behaviour for empty command list`
 
-- Add a service-level test:
-    - `commands = []` keeps the probe at the initial coordinates.
-    - `ExecutionDto` has all zeros for totals.
-- No production code change required (test characterises existing correct behaviour).
+- Add service-level test for `commands = []`:
+    - Final state equals initial state.
+    - All execution counters are zero.
+- No production change required (test documents and locks in existing behaviour).
 
 ---
 
-## 15. Edge case spec – start position on obstacle
+## 15. Edge Case – Start Position on Obstacle
 
 **Commit:** `test: define behaviour when start position is an obstacle`
 
-- Add a service-level test for:
-    - Starting on a cell that is also an obstacle.
-    - Expectation: service should fail fast with `IllegalArgumentException`.
-- Test initially fails.
-
----
-
-## 16. Implement start-on-obstacle fast-fail
+- Add failing test where:
+    - Start coordinate coincides with an obstacle.
+    - Expectation: request should fail fast.
 
 **Commit:** `feat: fail fast when start position is an obstacle`
 
-- Update `ProbeRunService.run(...)`:
-    - After bounds check, call `grid.isObstacle(startX, startY, startZ)`.
-    - If true, throw `IllegalArgumentException("Start position cannot be an obstacle")`.
-- All edge-case tests now pass.
+- Update `ProbeRunService`:
+    - After verifying bounds, check `grid.isObstacle(startX, startY, startZ)`.
+    - Throw `IllegalArgumentException("Start position cannot be an obstacle")` if true.
+- Start-on-obstacle test passes (GREEN).
 
 ---
 
-## 17. Edge case spec – duplicate obstacles and large command list
+## 16. Edge Case – Duplicate Obstacles
 
-**Commit:** `test: cover duplicate obstacles and large command sequences`
+**Commit:** `test: ensure duplicate obstacles in request are harmless`
 
-- Extend `ProbeRunServiceTest` with:
-    - A test that compares runs with a single obstacle vs duplicate entries of the same obstacle and asserts identical results.
-    - A “large input” sanity test that:
-        - Uses a reasonably large grid (e.g. 100×100×100).
-        - Executes a long command list (e.g. 10,000 `F` commands).
-        - Asserts that the run completes and remains within bounds.
+- Add test running the same commands twice:
+    - Once with a single obstacle.
+    - Once with the same obstacle duplicated in the request.
+- Assert final state, execution metrics, and visited coordinates are identical.
+- Confirms `Set`-based obstacle storage behaves as expected.
 
 ---
 
-## 18. Controller error-path specs for malformed and invalid input
+## 17. Edge Case – Large Command List
+
+**Commit:** `test: add sanity coverage for large command lists`
+
+- Add a “large input” test:
+    - Grid: large enough (e.g. 100 × 100 × 100).
+    - Commands: 10,000 `F` moves.
+    - Assert:
+        - No exception thrown.
+        - Final position remains within bounds.
+- Provides lightweight performance sanity coverage for the kata.
+
+---
+
+## 18. TDD History Documentation
+
+**Commit:** `docs: add TDD git history narrative`
+
+- Add `GIT_HISTORY.md` describing the TDD evolution of the project.
+- Summarise major commits, their intent, and how they relate to tests.
+
+---
+
+## 19. Controller Error-Path Tests
 
 **Commit:** `test: add controller tests for malformed JSON and missing fields`
 
-- Extend `ProbeControllerTest` with:
-    - A test for malformed JSON body where the request is not parseable:
-        - Expect HTTP 400.
-        - `error.code = "VALIDATION_ERROR"`.
-        - `error.message = "Malformed JSON request"`.
-    - A test for a request missing mandatory fields (e.g. `grid` is `null`):
-        - Expect HTTP 422.
-        - `error.code = "VALIDATION_ERROR"`.
-        - `error.message` is non-empty and helpful.
+- Add tests to `ProbeControllerTest` for:
+    - Malformed JSON → 400 + `"Malformed JSON request"`.
+    - Missing required field (`grid = null`) → validation error payload.
+- Initially expected 422 for missing field (RED).
+
+**Commit:** `test: align mandatory-field validation test with 400 response`
+
+- Adjust test to expect 400 (Bad Request), matching `MethodArgumentNotValidException`
+  handling in `GlobalExceptionHandler`.
+- Tests pass (GREEN).
 
 ---
 
-## 19. Documentation of TDD history and performance scope
+## 20. Validation Utilities Fix
 
-**Commit:** `docs: add TDD git history and performance notes`
+**Commit:** `feat: add validation overload and align GlobalExceptionHandler with ErrorResponse API`
 
-- Add `GIT_HISTORY.md` describing the TDD evolution of the project.
-- Update `README` with a short note explaining:
-    - Performance testing is limited to a large-input sanity test.
-    - This is acceptable for a kata but could be extended in a real system.
+- Add factory methods to `ErrorResponse`:
+    - `validation(String msg)`
+    - `validation(String msg, List<ErrorDetail> details)`
+- Update `GlobalExceptionHandler` to use these factories.
+- Ensure `IllegalArgumentException` is mapped to 422 with a consistent
+  `"VALIDATION_ERROR"` error payload.
+
+---
+
+## 21. API Validation – Negative Coordinates
+
+**Commit:** `test: add api validation test for negative coordinates`
+
+- Add test posting a `RunRequest` with negative coordinates.
+- Expect:
+    - HTTP 400.
+    - `VALIDATION_ERROR` with `grid` or `start` field issues from bean validation.
+- Confirms `@Min(0)` constraints on coordinates are enforced at API level.
+
+---
+
+## 22. README Enhancements: Swagger & Performance Notes
+
+**Commit:** `docs: document Swagger/OpenAPI endpoints in README`
+
+- Update `README.md` with an “API Documentation (OpenAPI / Swagger)” section:
+    - `http://localhost:8080/swagger-ui.html`
+    - `http://localhost:8080/v3/api-docs`
+- Explain how to access interactive docs and how to disable them in production.
+
+**Commit:** `docs: add performance testing notes to README`
+
+- Add section describing:
+    - Large-input sanity test (`ProbeRunServiceTest.largeCommandList_isHandledWithinGridBounds`).
+    - What is and isn’t covered (no full load or stress tests).
+- Clarify that extended performance testing is out-of-scope for this kata.
+
+---
+
+## 23. CI Integration
+
+**Commit:** `ci: add GitHub Actions workflow for Maven build and tests`
+
+- Add `.github/workflows/maven-ci.yml`:
+    - Trigger on push and PR to main/master.
+    - Use JDK 21.
+    - Run `mvn -B verify`.
+- Ensures tests run automatically on each change.
+
+---
+
+## 24. OpenAPI Controller Documentation
+
+**Commit:** `feat: enhance ProbeController with OpenAPI annotations`
+
+- Annotate `ProbeController` with:
+    - `@Tag` for controller grouping.
+    - `@Operation` for endpoint summary and description.
+    - `@ApiResponses` documenting 200/400/422 responses referencing `RunResponse`
+      and `ErrorResponse`.
+- No functional changes; improves Swagger documentation.
+
+---
+
+## 25. DTO OpenAPI Schema Annotations
+
+**Commit:** `docs: add comprehensive OpenAPI schema annotations to all DTOs and error models`
+
+- Add `@Schema` annotations to DTOs:
+    - `RunRequest`, `RunResponse`
+    - `GridDto`, `CoordinateDto`
+    - `FinalStateDto`, `ExecutionDto`, `InvalidCommandDto`
+- Add `@Schema` annotations to error classes:
+    - `ErrorResponse`, `ErrorBody`, `ErrorDetail`
+- Include field descriptions, examples, and high-level class descriptions.
+- Restore `ErrorResponse.validation(...)` helpers for use in exception handling.
+
+---
+
+## 26. ExecutionDto Constructor Fix
+
+**Commit:** `fix: restore ExecutionDto all-args constructor required by ProbeRunService`
+
+- Reintroduce the all-args constructor in `ExecutionDto`:
+    - Needed for `new ExecutionDto(totalCommands, executedCommands, blockedMoves, invalidCommands)`.
+- Keep no-args constructor for deserialisation.
+- Fixes compilation error introduced by DTO refactor.
+
+---
+
+## 27. Final DTO Pass & Swagger Polish
+
+**Commit:** `docs: refine DTO schema documentation and align with current API contract`
+
+- Final pass over all DTOs to ensure:
+    - Types and field names match the latest implementation.
+    - Swagger/OpenAPI schemas align with the actual JSON payload.
+- Confirms the API is fully self-documented in Swagger UI.
+
+---
