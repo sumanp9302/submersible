@@ -87,6 +87,47 @@ src
 ├── interpreter
 └── service
 
+---
+
+# 14. Performance Testing Notes
+
+This project includes **a single large-input sanity test**:
+
+- `ProbeRunServiceTest.largeCommandList_isHandledWithinGridBounds`
+
+This test verifies:
+
+- The system handles 10,000 movement commands without failure.
+- Final coordinates remain within grid bounds.
+- No performance bottleneck appears in normal execution.
+
+**Purpose:**  
+Lightweight performance assurance suitable for a coding exercise.
+
+**Not included:**
+- Load testing
+- Stress testing
+- Throughput benchmarking
+- Memory profiling
+
+These could be added in a production scenario but are intentionally out of scope for this kata.
+
+---
+
+## 15. API Documentation (OpenAPI / Swagger)
+
+This project uses **springdoc-openapi** to expose the REST contract via:
+
+- **Swagger UI** (interactive docs)
+    - URL: `http://localhost:8080/swagger-ui.html`
+- **OpenAPI JSON**
+    - URL: `http://localhost:8080/v3/api-docs`
+
+When you run the application locally:
+
+```bash
+mvn spring-boot:run
+
 
 
 
