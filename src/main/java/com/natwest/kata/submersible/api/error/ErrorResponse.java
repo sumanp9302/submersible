@@ -1,10 +1,14 @@
 package com.natwest.kata.submersible.api.error;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.util.Collections;
 import java.util.List;
 
+@Schema(description = "Standard API error response format.")
 public class ErrorResponse {
 
+    @Schema(description = "Wrapper around error metadata.")
     private ErrorBody error;
 
     public ErrorResponse() {
@@ -14,16 +18,11 @@ public class ErrorResponse {
         this.error = error;
     }
 
-    /**
-     * Convenience overload: validation error with no details.
-     */
+    // ✅ Convenience factory methods for validation errors
     public static ErrorResponse validation(String msg) {
         return validation(msg, Collections.emptyList());
     }
 
-    /**
-     * Full validation error with details.
-     */
     public static ErrorResponse validation(String msg, List<ErrorDetail> details) {
         return new ErrorResponse(new ErrorBody("VALIDATION_ERROR", msg, details, null));
     }
@@ -36,39 +35,21 @@ public class ErrorResponse {
         this.error = error;
     }
 
-    public static class ErrorDetail {
-        private String field;
-        private String issue;
+    // --- Nested Classes ---
 
-        public ErrorDetail() {
-        }
-
-        public ErrorDetail(String field, String issue) {
-            this.field = field;
-            this.issue = issue;
-        }
-
-        public String getField() {
-            return field;
-        }
-
-        public void setField(String field) {
-            this.field = field;
-        }
-
-        public String getIssue() {
-            return issue;
-        }
-
-        public void setIssue(String issue) {
-            this.issue = issue;
-        }
-    }
-
+    @Schema(description = "Detailed error metadata container.")
     public static class ErrorBody {
+
+        @Schema(description = "Error code category.", example = "VALIDATION_ERROR")
         private String code;
+
+        @Schema(description = "Human readable error message.", example = "Payload validation failed")
         private String message;
+
+        @Schema(description = "List of field-level validation issues.")
         private List<ErrorDetail> details;
+
+        @Schema(description = "Trace ID useful for log correlation.", example = "abc123", nullable = true)
         private String traceId;
 
         public ErrorBody() {
@@ -111,6 +92,40 @@ public class ErrorResponse {
 
         public void setTraceId(String traceId) {
             this.traceId = traceId;
+        }
+    }
+
+    @Schema(description = "Represents a single validation or domain error for a specific field.")
+    public static class ErrorDetail {
+
+        @Schema(description = "Field name that caused the error.", example = "grid")
+        private String field;
+
+        @Schema(description = "Description of the validation issue.", example = "must not be null")
+        private String issue;
+
+        public ErrorDetail() {
+        }
+
+        public ErrorDetail(String field, String issue) {
+            this.field = field;
+            this.issue = issue;
+        }
+
+        public String getField() {
+            return field;
+        }
+
+        public void setField(String field) {
+            this.field = field;
+        }
+
+        public String getIssue() {
+            return issue;
+        }
+
+        public void setIssue(String issue) {
+            this.issue = issue;
         }
     }
 }
