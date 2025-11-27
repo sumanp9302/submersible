@@ -22,7 +22,6 @@ class ProbeRunServiceTest {
         req.setGrid(new GridDto(5, 5, 5));
         req.setStart(new CoordinateDto(1, 2, 3));
         req.setDirection(Direction.EAST);
-        // default non-empty commands; tests will override when needed
         req.setCommands(Collections.singletonList("F"));
         req.setObstacles(Collections.emptyList());
         return req;
@@ -52,5 +51,29 @@ class ProbeRunServiceTest {
         assertEquals(0, execution.getExecutedCommands());
         assertEquals(0, execution.getBlockedMoves());
         assertTrue(execution.getInvalidCommands().isEmpty());
+    }
+
+    @Test
+    void startOnObstacle_throwsIllegalArgumentException() {
+        // given
+        RunRequest req = baseRequest();
+        CoordinateDto start = req.getStart();
+
+        // Put an obstacle exactly at the start position
+        req.setObstacles(Collections.singletonList(
+                new CoordinateDto(start.getX(), start.getY(), start.getZ())
+        ));
+        req.setCommands(Collections.emptyList());
+
+        // when / then
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> service.run(req)
+        );
+
+        assertTrue(
+                ex.getMessage().toLowerCase().contains("obstacle"),
+                "Exception message should mention obstacle"
+        );
     }
 }
