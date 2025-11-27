@@ -35,6 +35,11 @@ public class ProbeRunService {
             throw new IllegalArgumentException("Start position is out of bounds");
         }
 
+        // NEW: starting position must not be an obstacle
+        if (grid.isObstacle(start.getX(), start.getY(), start.getZ())) {
+            throw new IllegalArgumentException("Start position cannot be an obstacle");
+        }
+
         // Initialize probe
         Probe probe = new Probe(start.getX(), start.getY(), start.getZ(), req.getDirection(), grid);
 
