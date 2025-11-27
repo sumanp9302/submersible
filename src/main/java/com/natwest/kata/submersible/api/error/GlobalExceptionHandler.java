@@ -2,7 +2,6 @@ package com.natwest.kata.submersible.api.error;
 
 import com.natwest.kata.submersible.api.error.ErrorResponse.ErrorDetail;
 import jakarta.validation.ConstraintViolationException;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -16,32 +15,29 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex) {
-        // Domain validation errors (e.g., start/obstacle out of bounds) → 422
-        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-                .body(ErrorResponse.validation(ex.getMessage(), Collections.emptyList()));
+        ErrorResponse body = ErrorResponse.validation(ex.getMessage());
+        return ResponseEntity.unprocessableEntity().body(body);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleMethodArgumentNotValid(MethodArgumentNotValidException ex) {
-        var details = ex.getBindingResult().getFieldErrors().stream()
-                .map(fe -> new ErrorDetail(fe.getField(), fe.getDefaultMessage()))
-                .toList();
-        return ResponseEntity.badRequest()
-                .body(ErrorResponse.validation("Payload validation failed", details));
+        var details = ex.getBindingResult().getFieldErrors().stream().map(fe -> new ErrorDetail(fe.getField(), fe.getDefaultMessage())).toList();
+
+        ErrorResponse body = ErrorResponse.validation("Payload validation failed", details);
+        return ResponseEntity.badRequest().body(body);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ErrorResponse> handleConstraintViolation(ConstraintViolationException ex) {
-        var details = ex.getConstraintViolations().stream()
-                .map(cv -> new ErrorDetail(String.valueOf(cv.getPropertyPath()), cv.getMessage()))
-                .toList();
-        return ResponseEntity.badRequest()
-                .body(ErrorResponse.validation("Constraint violation", details));
+        var details = ex.getConstraintViolations().stream().map(cv -> new ErrorDetail(String.valueOf(cv.getPropertyPath()), cv.getMessage())).toList();
+
+        ErrorResponse body = ErrorResponse.validation("Constraint violation", details);
+        return ResponseEntity.badRequest().body(body);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleNotReadable(HttpMessageNotReadableException ex) {
-        return ResponseEntity.badRequest()
-                .body(ErrorResponse.validation("Malformed JSON request", Collections.emptyList()));
+        ErrorResponse body = ErrorResponse.validation("Malformed JSON request", Collections.emptyList());
+        return ResponseEntity.badRequest().body(body);
     }
 }
